@@ -1,0 +1,19 @@
+1. whois domain
+2. host domain
+3. dig domain
+4. dnsenum domain
+5. 域传输
+6. dnsdict6 domain
+7. fierce -dns domain -threads 3
+8. dmitry -iwnse domain
+    ● 进行whois 査询;
+    ● 从Netcraft.com 的网站上收集相关信息;
+    ● 捜索所有可能的子域;
+    ● 搜索所有可能的电子邮件地址。
+   dmitry -p domain -f -b
+    ● 进行简单的端口扫描;
+9. Maltego https://www.paterva.com/web7/community/community.php
+10. tcptraceroute domain/ip 成功则返回<syn,ack> 失败返回<ack>
+11. tctrace -i eth0 -d domain/ip
+12. theharvester -d xishanwenhua.com -l 100 -b baidu
+
