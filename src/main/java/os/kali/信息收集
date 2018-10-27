@@ -16,4 +16,9 @@
 10. tcptraceroute domain/ip 成功则返回<syn,ack> 失败返回<ack>
 11. tctrace -i eth0 -d domain/ip
 12. theharvester -d xishanwenhua.com -l 100 -b baidu
-
+13. ping domain/ip -c 3
+14. arping domain/ip -c 1
+15. fping ip1 ip2 ip3
+16. fping -s domain1 domain2
+17. hping3 -S --flood --rand-source -p 8080 10.220.110.228
+18. nping -c1 10.220.110.200-228

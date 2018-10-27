@@ -1,0 +1,44 @@
+x='ABC'.encode('ascii')字符转ascii码
+x.decode('ascii')ascii码转字符
+ord('A')字符的ascii码
+chr(85)ascii码转字符
+3//2=1获得整数部分
+3/2=1.5
+3%2=1
+b'ABC'代表bytes每个字符都占用一个字节
+len('中文'.encode('utf-8'))
+print('%s' % '替换喽')
+names=['a','b','c']list数组可下标循环
+names[0]
+names[-1]
+len(names)
+names.append('v1')
+names.insert(0, 'v2')
+names.insert(0, [1])
+names.pop(1)
+names.pop()
+x=(1,)元组,类似list,元素确定后不可改变,无增加删除方法
+x=(1, 'a', [1])此时,第三个元素为一个list,可以对其进行改变
+if a > b:
+ ...
+elif a == b:
+ ...
+else:
+ ...
+var1=input('var1:')获得用户输入流并赋值,默认str类型
+range(10)生成一个10个元素的序列
+比如说循环从0-100的数字,那就 for v in range(101): print(v)即可
+n=100
+while n > 0:
+  print(n)
+  n=n-1
+break
+continue
+d={'name':'Joh', 'sex':'男'} dict
+d['name']
+d.get('name', '-1')
+for(key in d):print(key)
+s=set([])
+s.add(1)
+s.remove(1)
+
