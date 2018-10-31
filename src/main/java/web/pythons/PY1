@@ -1,0 +1,22 @@
+递归
+切片L=['0','1','2','3','4']
+L[0:3]
+L[-1:]
+L[-2:]
+迭代d={'k1':'v1','k2':'v2'}
+for key in d:
+    print(key + "==" + d.get(key))
+for k,v in d.items(): print(k+"=="+v)
+列表生成式
+for x in range(1, 11)
+    print(x)
+[x*x for x in range(1,101) if x % 2==0]
+[m+n for m in 'ABC' for n in 'XZY']
+import os
+[d for d in os.listdir('.')]
+t=a,b+b====>tuple(1,2)
+def power(x):return x+x
+list(map(power, [1,2,3,4]))
+def add(x,y): return x+y
+from functools import reduce
+reduce(add,[1,2,3,4,5])

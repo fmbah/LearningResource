@@ -19,6 +19,46 @@ public class T11脏读 {
      *                        子线程将username,password都设置号了,main线程才跑,读取到了子线程设置的相应值
      *               main线程休眠的时间,提高了问题增大的几率
      *
+     *
+     *          注释 2018-10-30: Mysql InnoDB引擎,默认隔离级别为可重复读
+     *
+     *                     A用户:  set session transaction isolation level read uncommitted；
+     *                            start transaction;
+     *                            select * from account;
+     *                     B用户:  set session transaction isolation level read uncommitted；
+     *                           start transaction;
+     *                           update account set account=account+200 where id = 1;
+     *                     A用户此时会读取到B用户未提交的数据,这就称为脏读
+     *
+     *
+     *                    A用户:  set session transaction isolation level read committed；
+     *                           start transaction;
+     *                           update account set account=account-200 where id=1;
+     *                    B用户:  select * from account； 此时是正常的
+     *                    A用户:  提交事物
+     *                    B用户:                                    select * from account； 可以正常读取到A用户操作的数据
+     *                          此时的问题是:在B用户的事物中,可能会读取到A用户的两个结果(事物前,事物后),这种现象叫不可重复读
+     *
+     *                    A用户:      set session transaction isolation level repeatable read;
+     *                               start transaction;
+     *                    B用户:      select * from account;
+     *                    A用户:      insert into account(id,account) value(3,1000);
+     *                                commit;
+     *                                select * from account;   结果正常
+     *                    B用户:      select * from account;还是原来的那么几条数据
+     *                                此时也想插入  insert into account(id,account) value(3,1000); 一条数据,则出现数据重复问题
+     *                                虽然说在B事物中保证了读取数据的一致性,但是可能会出现幻读的情况
+     *
+     *                    serializable（串行化）
+     *                    B用户:  set session transaction isolation level serializable;
+     *                           start transaction;
+     *                           select * from account;
+     *                    A用户:      insert into account(id,account) value(3,1000);
+     *                                  A用户会发现陷入了等待(B事物一直未提交),可能会超时也可能成功(B事物提交完成了)
+     *                             此种隔离级别最严格,其它会话操作此表的写操作都会被挂起!
+     *
+     *                           
+     *
      * @param:
      * @return:
      * @auther: Fmbah

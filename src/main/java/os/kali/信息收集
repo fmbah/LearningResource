@@ -22,3 +22,8 @@
 16. fping -s domain1 domain2
 17. hping3 -S --flood --rand-source -p 8080 10.220.110.228
 18. nping -c1 10.220.110.200-228
+19. p0f -i eth0 -p -o logs.log
+20. nmap -O ip
+TCP协议(三次握手,四次挥手)
+snmap
+openvas

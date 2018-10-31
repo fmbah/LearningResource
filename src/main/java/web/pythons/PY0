@@ -41,4 +41,12 @@ for(key in d):print(key)
 s=set([])
 s.add(1)
 s.remove(1)
-
+int(1.2)
+float(1)
+def my_abs(x=0):
+    if x > 0 :
+        return x
+    else:
+        return -x
+上面的方法保存为一个文件absteset.py
+在同一个目录下引入的时候 from abstest import my_abs

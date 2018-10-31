@@ -57,6 +57,6 @@ class MoreThread1 extends Thread {
 class MoreThread2 implements Runnable {
 
     public void run() {
-        System.out.println(this.getClass());
+        System.out.println(this.getClass() + "==>" + Thread.currentThread().getName());
     }
 }

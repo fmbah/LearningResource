@@ -1,0 +1,21 @@
+集群
+分布式
+分布式/SOA/微服务
+CAP:数据一致性,可用性,分区容错性
+cloud:
+    服务治理: Spring Cloud Eureka
+        Eureka Client 服务提供
+        Eureka Client 服务消费
+        Eureka Client 即提供也消费
+    客户端负载均衡: Spring Cloud Ribbon
+        客户端负载均衡: Ribbon
+        服务端负载均衡: Nginx
+    服务容错保护: Spring Cloud Hystrix(调用多个远程服务时,某个服务出现延迟,导致所有请求都处于延迟状态,甚至出现负载饱和的情况,资源耗尽...雪崩)
+        Hystrix: 滑动窗口大小(20)
+                 熔断器开关间隔(5s)
+                 错误率(50%)
+                 ...
+        Hystrix仪表盘
+    声明式服务调用: Spring Cloud Feign(整合了Ribbon和Hystrix,提供了声明式的服务调用,不再通过RestTemplate)
+    API网关服务: Spring Cloud Zuul
+    分布式配置中心: Spring Cloud COnfig(server端存放配置文件,client端通过接口读取,统一初始化应用)

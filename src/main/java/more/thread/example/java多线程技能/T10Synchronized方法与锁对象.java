@@ -9,23 +9,23 @@ package more.thread.example.java多线程技能;
  **/
 public class T10Synchronized方法与锁对象 {
 
-//    public static void main (String args[]) {
-//        MyMethod myMethod = new MyMethod();
-//        MyThread10_1 myThread10_1 = new MyThread10_1(myMethod);
-//        MyThread10_2 myThread10_2 = new MyThread10_2(myMethod);
-//        myThread10_1.start();
-//        myThread10_2.start();
-//    }
-
     public static void main (String args[]) {
-        MyMethod_1 myMethod_1 = new MyMethod_1();
-        MyThread10_1_1 myThread10_1_1 = new MyThread10_1_1(myMethod_1);
-        MyThread10_2_2 myThread10_2_2 = new MyThread10_2_2(myMethod_1);
-        MyThread10_3_3 myThread10_3_3 = new MyThread10_3_3(myMethod_1);
-        myThread10_1_1.start();
-        myThread10_2_2.start();
-        myThread10_3_3.start();
+        MyMethod myMethod = new MyMethod();
+        MyThread10_1 myThread10_1 = new MyThread10_1(myMethod);
+        MyThread10_2 myThread10_2 = new MyThread10_2(myMethod);
+        myThread10_1.start();
+        myThread10_2.start();
     }
+
+//    public static void main (String args[]) {
+//        MyMethod_1 myMethod_1 = new MyMethod_1();
+//        MyThread10_1_1 myThread10_1_1 = new MyThread10_1_1(myMethod_1);
+//        MyThread10_2_2 myThread10_2_2 = new MyThread10_2_2(myMethod_1);
+//        MyThread10_3_3 myThread10_3_3 = new MyThread10_3_3(myMethod_1);
+//        myThread10_1_1.start();
+//        myThread10_2_2.start();
+//        myThread10_3_3.start();
+//    }
 
 }
 
@@ -35,6 +35,8 @@ public class T10Synchronized方法与锁对象 {
  * @Description: 不加锁的时候,出现两个线程进入同一个方法,延时后结束
  *               加锁的时候,则先进入方法的线程获得该方法锁,并阻止其它线程访问,达到了顺序访问的效果
  *               上面两种情况都是针对共享一个对象而言,如果没有存在共享对象,锁的意义就没有了!
+ *
+ *               注释 2018-10-30:此时的锁,只是演示通过synchronized修饰符达到了顺序线程间顺序访问方法的作用
  */
 class MyMethod {
     synchronized public void printMethodSort() {

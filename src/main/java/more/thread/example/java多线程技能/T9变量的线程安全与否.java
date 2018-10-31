@@ -11,20 +11,21 @@ public class T9变量的线程安全与否 {
 
     /**
      *
-     * 功能描述: 演示线程安全的情况
+     * 功能描述: 演示线程安全的情况,
+     *          注释:2018-10-30   为什么线程安全,因为方法内的变量都是存在线程栈上的,属于线程私有,所以不会出现同步问题!
      *
      * @param:
      * @return:
      * @auther: Fmbah
      * @date: 18-10-25 下午5:06
      */
-//    public static void main (String args[]) {
-//        ExampleBean9 exampleBean9 = new ExampleBean9();
-//        MyThread9_1 myThread9_1 = new MyThread9_1(exampleBean9);
-//        myThread9_1.start();
-//        MyThread9_2 myThread9_2 = new MyThread9_2(exampleBean9);
-//        myThread9_2.start();
-//    }
+    public static void main (String args[]) {
+        ExampleBean9 exampleBean9 = new ExampleBean9();
+        MyThread9_1 myThread9_1 = new MyThread9_1(exampleBean9);
+        myThread9_1.start();
+        MyThread9_2 myThread9_2 = new MyThread9_2(exampleBean9);
+        myThread9_2.start();
+    }
 
     /**
      *
@@ -37,21 +38,21 @@ public class T9变量的线程安全与否 {
      * @auther: Fmbah
      * @date: 18-10-25 下午5:07
      */
-    public static void main (String args[]) {
+//    public static void main (String args[]) {
 //        ExampleBean9_1 exampleBean9_1 = new ExampleBean9_1();
 //        MyThread9_1_1 myThread9_1_1 = new MyThread9_1_1(exampleBean9_1);
 //        myThread9_1_1.start();
 //        MyThread9_2_2 myThread9_2_1 = new MyThread9_2_2(exampleBean9_1);
 //        myThread9_2_1.start();
-
-        ExampleBean9_1 exampleBean9_1 = new ExampleBean9_1();
-        ExampleBean9_1 exampleBean9_1_1 = new ExampleBean9_1();
-        MyThread9_1_1 myThread9_1_1 = new MyThread9_1_1(exampleBean9_1);
-        myThread9_1_1.start();
-        MyThread9_2_2 myThread9_2_1 = new MyThread9_2_2(exampleBean9_1_1);
-        myThread9_2_1.start();
-
-    }
+//
+//        ExampleBean9_1 exampleBean9_1 = new ExampleBean9_1();
+//        ExampleBean9_1 exampleBean9_1_1 = new ExampleBean9_1();
+//        MyThread9_1_1 myThread9_1_1 = new MyThread9_1_1(exampleBean9_1);
+//        myThread9_1_1.start();
+//        MyThread9_2_2 myThread9_2_1 = new MyThread9_2_2(exampleBean9_1_1);
+//        myThread9_2_1.start();
+//
+//    }
 
 }
 
@@ -60,6 +61,11 @@ class ExampleBean9 {
         int count = 1;
         if (username.equals("a")) {
             count = 2;
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             System.out.println("线程1设置完成");
         } else {
             count = 3;
