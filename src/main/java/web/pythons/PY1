@@ -16,7 +16,7 @@ import os
 [d for d in os.listdir('.')]
 t=a,b+b====>tuple(1,2)
 def power(x):return x+x
-list(map(power, [1,2,3,4]))
+list(map(power, [1,2,3,4])),,,,,1,4,9,16
 def add(x,y): return x+y
 from functools import reduce
 reduce(add,[1,2,3,4,5])

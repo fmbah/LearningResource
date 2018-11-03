@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * @ClassName 多线程生产者消费者模式T33
- * @Description
+ * @Description notify:随机唤醒当前锁等待中的其中一个线程(在以下的例子就可能是消费者,也可能是生产者)
  * @Author root
  * @Date 18-10-31 上午11:30
  * @Version 1.0
@@ -13,7 +13,22 @@ import java.util.List;
 public class 多线程生产者消费者模式T33 {
 
     public static void main(String args[]) {
+        String lock = new String("");
+        PT33 pt33 = new PT33(lock);
+        CT33 ct33 = new CT33(lock);
 
+        Thread[] threadP = new Thread[2];
+        Thread[] threadC = new Thread[2];
+
+        for (int i = 0; i < 2; i++) {
+            threadP[i] = new MyThreadP33(pt33);
+            threadP[i].setName("生产者" + (i + 1));
+            threadC[i] = new MyThreadC33(ct33);
+            threadC[i].setName("消费者" + (i + 1));
+
+            threadC[i].start();
+            threadP[i].start();
+        }
     }
 }
 
