@@ -62,11 +62,11 @@ public class M1 {
              *      3. 将文档集合插入数据库集合中 mongoCollection.insertMany(List<Document>) 插入单个文档可以用 mongoCollection.insertOne(Document)
              *
              **/
-//            Document document = new Document("title", "MongoDB").append("description", "database").append("likes", 100).append("by", "Fly");
-//            List<Document> documents = new ArrayList<Document>();
-//            documents.add(document);
-//            collection.insertMany(documents);
-//            System.out.println("文档插入成功, 集合容量数量:" + collection.count());
+            Document document = new Document("title", "MongoDB").append("description", "database").append("likes", 100).append("by", "Fly");
+            List<Document> documents = new ArrayList<Document>();
+            documents.add(document);
+            collection.insertMany(documents);
+            System.out.println("文档插入成功, 集合容量数量:" + collection.count());
 
             //更新文档   将文档中likes=100的文档修改为likes=200
 //            collection.updateMany(Filters.eq("likes", 100), new Document("$set",new Document("likes",200)));

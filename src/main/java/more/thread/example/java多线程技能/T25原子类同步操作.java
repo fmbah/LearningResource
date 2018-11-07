@@ -1,5 +1,7 @@
 package more.thread.example.java多线程技能;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @ClassName T25原子类同步操作
  * @Description
@@ -29,8 +31,8 @@ public class T25原子类同步操作 {
 }
 
 class MyAutoIntegerThread25 extends Thread {
-//    private AtomicInteger count = new AtomicInteger(0);
-    private int count = 0;
+    private AtomicInteger count = new AtomicInteger(0);
+//    private int count = 0;
 
     @Override
     public void run() {
@@ -44,8 +46,8 @@ class MyAutoIntegerThread25 extends Thread {
 //        }
         System.out.println(Thread.currentThread().getName() + ", 这次的count值是多少?????" + count);
 //        for (int i = 0; i < 100; i++) {
-//            count.incrementAndGet();
-            count = count + 1;
+            count.incrementAndGet();
+//            count = count + 1;
 //        }
 //        System.out.println(Thread.currentThread().getName() + "====>" + count.get());
 //        System.out.println(Thread.currentThread().getName() + "====>" + count);

@@ -28,7 +28,8 @@ class Service28 {
         try {
             synchronized (object) {
                 System.out.println(Thread.currentThread().getName() + ",begin wait");
-                object.wait();
+//                object.wait();
+                Thread.sleep(5000);
                 System.out.println(Thread.currentThread().getName() + ",end wait");
             }
         } catch (InterruptedException e) {

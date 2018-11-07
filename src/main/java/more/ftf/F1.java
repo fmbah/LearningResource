@@ -12,12 +12,12 @@ public class F1 {
     public static void main(String args[]) {
         //自我介绍
         //项目介绍
-        //8种基本数据类型
-        //Integer的缓冲数据范围
-        //Object类的方法
+        //8种基本数据类型 byte char boolean double float int long string
+        //Integer的缓冲数据范围-128~127
+        //Object类的方法 toString equals hasCode wait notify notifyAll
         //String str = "123", String newStr = new String("123")生成几个对象
-        //wait和sleep区别
-        //hashcode用在哪里
+        //wait和sleep区别 wait 自动释放锁 sleep不释放锁
+        //hashcode用在哪里 map concurrentmap
         //hashmap
         //JVM
         //内存溢出内存泄漏
