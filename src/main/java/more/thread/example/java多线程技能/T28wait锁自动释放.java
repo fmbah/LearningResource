@@ -28,7 +28,7 @@ class Service28 {
         try {
             synchronized (object) {
                 System.out.println(Thread.currentThread().getName() + ",begin wait");
-//                object.wait();
+                object.wait();//当wait方法存在的时候,会自动释放锁
                 Thread.sleep(5000);
                 System.out.println(Thread.currentThread().getName() + ",end wait");
             }

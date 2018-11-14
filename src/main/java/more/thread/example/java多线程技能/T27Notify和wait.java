@@ -47,7 +47,7 @@ class MyThread27 extends Thread {
         try {
             synchronized (object) {
                 System.out.println("1");
-//                object.wait();
+                object.wait();
                 Thread.sleep(2000);
                 System.out.println("2");
             }
@@ -68,7 +68,7 @@ class MyThread27_1 extends Thread {
     public void run() {
         synchronized (object) {
             System.out.println("3");
-//            object.notify();
+            object.notify();
             System.out.println("4");
         }
     }

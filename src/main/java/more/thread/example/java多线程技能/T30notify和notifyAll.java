@@ -22,11 +22,11 @@ public class T30notify和notifyAll {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        MyNotifyOneThread myNotifyOneThread = new MyNotifyOneThread(object);
-//        myNotifyOneThread.start();
+        MyNotifyOneThread myNotifyOneThread = new MyNotifyOneThread(object);
+        myNotifyOneThread.start();
 
-        MyNotifyAllThread myNotifyAllThread = new MyNotifyAllThread(object);
-        myNotifyAllThread.start();
+//        MyNotifyAllThread myNotifyAllThread = new MyNotifyAllThread(object);
+//        myNotifyAllThread.start();
     }
 
 }
@@ -99,10 +99,10 @@ class MyNotifyOneThread extends Thread {
         synchronized (object) {
             object.notify();
 
-            object.notify();
-            object.notify();
-            object.notify();
-            object.notify();
+//            object.notify();
+//            object.notify();
+//            object.notify();
+//            object.notify();
 
         }
     }
