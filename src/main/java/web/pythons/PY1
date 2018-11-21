@@ -20,3 +20,14 @@ list(map(power, [1,2,3,4])),,,,,1,4,9,16
 def add(x,y): return x+y
 from functools import reduce
 reduce(add,[1,2,3,4,5])
+进制表示,二进制:0b
+        八进制:0o
+        十六进制:0x
+        进制转换
+            dec = int(input("输入数字:"))
+            print("十进制: ", dec)
+            print("转换为二进制: ", bin(dec))
+            print("转换为八进制", oct(dec))
+            print("转换为十六进制", hex(dec))
+        任意进制转换为10进制
+            print(int('110', 2))  将二进制110转换为十进制数字

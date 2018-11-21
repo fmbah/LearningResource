@@ -22,6 +22,9 @@ public class T46Condition等待与通知 {
         MyReentrantConditionThreadA myReentrantConditionThreadA = new MyReentrantConditionThreadA(myReentrantLockConditionService);
 
         myReentrantConditionThreadA.start();
+        MyReentrantConditionThreadA myReentrantConditionThreadA1 = new MyReentrantConditionThreadA(myReentrantLockConditionService);
+
+        myReentrantConditionThreadA1.start();
 
         try {
             Thread.sleep(1000);

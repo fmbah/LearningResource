@@ -31,7 +31,7 @@ public class AM4 {
 
     public static void main (String args[]) {
 
-        String[] strs = {"aca","cba"};
+        String[] strs = {"dog","racecar","car"};
 
         System.out.println(longestCommonPrefix(strs));
     }
@@ -74,7 +74,7 @@ public class AM4 {
                 }
                 if (canContract) {
                     result += str;
-                } else if (!canContract && i == 0) {
+                } else if (!canContract) {
                     break;
                 }
             }

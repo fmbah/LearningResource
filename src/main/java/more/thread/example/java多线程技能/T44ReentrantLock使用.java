@@ -65,7 +65,7 @@ class MyReentrantLock44Thread extends Thread {
     @Override
     public void run() {
         super.run();
-//        myReentrantLock44Service.testMethod();
+        myReentrantLock44Service.testMethod();
         myReentrantLock44Service.testMethodSynchronized();
     }
 }

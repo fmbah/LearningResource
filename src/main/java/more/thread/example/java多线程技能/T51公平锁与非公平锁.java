@@ -14,7 +14,7 @@ public class T51公平锁与非公平锁 {
     public static void main (String args[]) {
         //当是公平锁,线程打印的顺序是有序的
         //当是非公平锁,线程打印的数需是乱的,并不是start了,就一定会执行!
-        final MyReentrantLockConditionService51 myReentrantLockConditionService51 = new MyReentrantLockConditionService51(true);
+        final MyReentrantLockConditionService51 myReentrantLockConditionService51 = new MyReentrantLockConditionService51(false);
 
         Runnable runnable = new Runnable() {
             @Override
