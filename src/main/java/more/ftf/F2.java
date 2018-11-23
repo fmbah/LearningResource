@@ -8,6 +8,9 @@ import java.util.Map;
 /**
  * @ClassName F2
  * @Description
+ *
+ *  参考这里: https://zhuanlan.zhihu.com/p/33774158
+ *
  * @Author root
  * @Date 18-11-19 下午5:13
  * @Version 1.0
@@ -111,8 +114,41 @@ public class F2 {
         //保证了内存中不会出现多份同样的字节码文件
 
         //自定义类加载器(如网络传输了加密的字节码)
+        //以下来自: https://my.oschina.net/mesopotamia/blog/410123
+        //基本回收算法: 引用记数法/标记清除法/复制法/标记整理法/增量收集法/分代回收法
+        //串行收集器:速度快,适用于单处理机器上；也可以用在100M左右的多处理机器上；-XX:+UseSerialGC打开
+        //并行收集器:适用于多处理器机器上, -XX:+UseParallelGC打开,同时建议将-XX:+UseParallelOldGC打开,否则老年代使用单线程进行处理制约其扩展能力...
+        //          使用-XX:ParallelGCThreads=设置并行垃圾回收的线程数。此值可以设置与机器处理器数量相等。
+        //并发收集器:可以保证大部分工作都并发进行（应用不停止），垃圾回收只暂停很少的时间，此收集器适合对响应时间要求比较高的中、大规模应用。使用-XX:+UseConcMarkSweepGC打开。
+        //          启动并发收集器：因为并发收集在应用运行时进行收集，所以必须保证收集完成之前有足够的内存空间供程序使用，否则会出现“Concurrent Mode Failure”。通过设置-XX:CMSInitiatingOccupancyFraction=指定还有多少剩余堆时开始执行并发收集
+        //On Windows systems, you can use the following command to find out the defaults on the system where your applications runs.
+        //
+        //java -XX:+PrintFlagsFinal -version | findstr HeapSize
+        //
+        //Look for the options MaxHeapSize (for -Xmx) and InitialHeapSize for -Xms.
+        //
+        //On a Unix/Linux system, you can do
+        //
+        //java -XX:+PrintFlagsFinal -version | grep HeapSize
+        //
+        //I believe the resulting output is in bytes.
+        //java整个堆大小设置为fullgc后老年代的3-4倍
+        //永久区或元数据区设置为fullgc老年代的1.2-1.5倍
+        //老年代设置为fullgc后老年代的1.2-1.5倍
+        //年轻代设置为fullgc后老年代的2-3倍
 
+        //InnoDB MyISAM 前者支持事物,后者不支持事物,查询快；
+        //悲观锁:读取数据就加锁,防止数据被修改,其它的读取当前数据的线程需要等待锁释放,适合写多读少的场景,如何此处读很多,会降低系统的吞吐量(同一时间访问系统的请求数) select * from a for update
+        //乐观锁:读取不加锁,修改时加锁,判断数据是否已经被修改过,适合读多写少的场景  update xx where id= 1 and version = ???
 
+        //https://blog.csdn.net/qq_33101675/article/details/78701198
+        //MyBatis应用程序根据XML配置文件创建SqlSessionFactory，
+        // SqlSessionFactory在根据配置，配置来源于两个地方，一处是配置文件，一处是Java代码的注解，
+        // 获取一个SqlSession。SqlSession包含了执行sql所需要的所有方法，
+        // 可以通过SqlSession实例直接运行映射的sql语句，完成对数据的增删改查和事务提交等，用完之后关闭SqlSession。
+
+        //mybatis源码分析: https://gitbook.cn/books/5a37b6b66eec7c4f044a75d0/index.html
+        //                https://github.com/tuguangquan/mybatis/tree/master/src/main/java/org/apache/ibatis/session
     }
 
     private static class MyClassLoader extends ClassLoader {

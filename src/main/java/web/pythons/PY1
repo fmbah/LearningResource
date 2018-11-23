@@ -31,3 +31,8 @@ reduce(add,[1,2,3,4,5])
             print("转换为十六进制", hex(dec))
         任意进制转换为10进制
             print(int('110', 2))  将二进制110转换为十进制数字
+import math
+math.sqrt(16)
+import numpy
+numpy.sqrt(16)
+numpy.square(4)
