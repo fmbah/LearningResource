@@ -37,7 +37,7 @@ public class AM1 {
      */
     public static void main (String args[]) {
 
-        System.out.println(reverse(120));
+        System.out.println(reverse(1234567899));
 
     }
 
@@ -55,4 +55,22 @@ public class AM1 {
         return result;
     }
 
+
+    /**
+     *
+     * 功能描述: 判断数字是否溢出
+     *
+     *  数字范围: -2^31 ~ 2^31-1
+     *
+     *
+     * @param:
+     * @return:
+     * @auther: Fmbah
+     * @date: 18-11-27 上午10:00
+     */
+    public static boolean biggerMaxOrMin (int x) {
+
+
+        return false;
+    }
 }

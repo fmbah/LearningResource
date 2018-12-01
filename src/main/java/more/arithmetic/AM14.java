@@ -40,9 +40,14 @@ public class AM14 {
      */
     public static void main (String args[]) {
 //        int[] nums = {6,1,4,5,3,9,0,1,9,5,1,8,6,7,0,5,5,4,3};
-//        int[] nums = {1, 2, 3};
-        int[] nums = {9, 9, 9};
-        plusOne(nums);
+//        int[] nums = {1, 2, 3, 9};
+        int[] nums = {8, 9, 9, 9};
+//        plusOne(nums);
+        int[] ints = plusOne1(nums);
+        for (int i : ints) {
+            System.out.print(i);
+        }
+
     }
 
     public static int[] plusOne(int[] digits) {
@@ -86,4 +91,51 @@ public class AM14 {
             maps.put(index, num);
         }
     }
+
+    /**
+     *
+     * 20181129 循环实现
+     * 执行用时: 1 ms, 在Plus One的Java提交中击败了37.62% 的用户
+     * 功能描述:
+     *
+     * @param:
+     * @return:
+     * @auther: Fmbah
+     * @date: 18-11-29 上午9:46
+     */
+    public static int[] plusOne1 (int[] digits) {
+        int tmp = digits[digits.length - 1] + 1;
+        if (tmp > 9) {
+
+            int carry = 0;
+            for (int i = digits.length - 1; i >= 0; i--) {
+                int var;
+                if (carry > 0) {
+                    var = digits[i] + carry;
+                } else {
+                    var = digits[i] + 1;
+                }
+                if (var > 9) {
+                    digits[i] = 0;
+                    carry = 1;
+                } else {
+                    digits[i] = var;
+                    break;
+                }
+            }
+
+            if (digits[0] == 0) {
+                int[] res = new int[digits.length + 1];
+                System.arraycopy(digits, 0, res, 1, res.length - 1);
+                res[0] = 1;
+                return res;
+            }
+
+            return digits;
+        } else {
+            digits[digits.length - 1] = tmp;
+            return digits;
+        }
+    }
+
 }

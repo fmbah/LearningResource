@@ -13,6 +13,8 @@ public class A2 {
      *
      * 功能描述: 判断一个整数是否是回文数。回文数是指正序（从左向右）和倒序（从右向左）读都是一样的整数。
      *
+     * 补充: 20181127 可使用stringbuffer的reverse()方法,也可根据数字进行判断比较
+     *
      * @param:
      * @return:
      * @auther: Fmbah

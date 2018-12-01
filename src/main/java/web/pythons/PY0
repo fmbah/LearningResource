@@ -37,7 +37,7 @@ continue
 d={'name':'Joh', 'sex':'男'} dict
 d['name']
 d.get('name', '-1')
-for(key in d):print(key)
+for key in d : print(key)
 s=set([])
 s.add(1)
 s.remove(1)

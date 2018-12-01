@@ -36,7 +36,7 @@ package more.arithmetic;
  **/
 public class AM17 {
     public static void main (String args[]) {
-        System.out.println(climbStairsMy(6));
+        System.out.println(climbStairs2(1));
     }
 
     /**

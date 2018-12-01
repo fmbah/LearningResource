@@ -28,9 +28,10 @@ package more.arithmetic;
 public class AM16 {
 
     public static void main (String args[]) {
-//        System.out.println(mySqrt(2));
+        System.out.println(mySqrt(9));
 //        System.out.println(NewtonSqrt(4, 1e-7));
-        System.out.println(DichotomySqrt(4, 1e-7));
+//        System.out.println(DichotomySqrt(9, 1e-7));
+        System.out.println(mathSqrt(0));
     }
 
     /**
@@ -114,8 +115,6 @@ public class AM16 {
      * 以下解法参照: https://www.jianshu.com/p/dcd73888ac3a
      * 功能描述: 二分法
      *
-     * 这个位置不要干想,你TM也不是genius!
-     *
      * 画坐标轴,
      *
      * 比如取4的平方根,精度为7个0
@@ -150,6 +149,32 @@ public class AM16 {
         }
         System.out.printf("Dichotomy final result = %f\n", last_middle);
         return last_middle;
+    }
+
+
+    public static int mathSqrt(int num) {
+
+        if (num >= 0) {
+            int higher = num;
+            int lower = 0;
+            int result = 0;
+
+            int middle = (higher + lower) / 2;
+
+            while (Math.abs(middle - result) > 0.1) {
+                if (middle * middle > num) {
+                    higher = middle;
+                } else {
+                    lower = middle;
+                }
+
+                result = middle;
+                middle = (higher + lower) / 2;
+            }
+            return result;
+        }
+
+        return 0;
     }
 
 }

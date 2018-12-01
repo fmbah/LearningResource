@@ -111,6 +111,18 @@ public class AM5 {
      *
      * 功能描述: 官方解答
      *
+     *
+     * 20181127补充:
+     *
+     * head: 0->1->2->3
+     * length: 4
+     * n:2
+     * 移除的索引为4-2 = 2
+     * dummy: 0->0>->1->[2]->3
+     * 其实目的就是让1的下一个指针直接指向3
+     *
+     * 值得注意: 利用引用来操作堆数据
+     *
      * @param:
      * @return:
      * @auther: Fmbah
@@ -126,8 +138,8 @@ public class AM5 {
             first = first.next;
         }
         length -= n;//获取要移除的元素索引
-        first = dummy;//first指针指到dummy上,其实暂存的是什么呢?
-        //打比方:要移除掉正序的第二个元素,根据以上的代码length=1,first作为第一个元素,它的next元素为第二个元素,我们要移除掉它,目前的做法的让暂存元素为第二个元素(first),
+        first = dummy;
+
         while (length > 0) {
             length--;
             first = first.next;
