@@ -43,7 +43,7 @@ class Task15 {
     //synchronized 加在方法上,共耗时6s
     public void doLongTimeTask() {
 //        synchronized (this) {//加在此处,共耗时6s
-            System.out.println("begin Task");
+            System.out.println("begin FixedThreadPoolTaskDemo");
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
@@ -57,7 +57,7 @@ class Task15 {
             }
             System.out.println(getData1);
             System.out.println(getData2);
-            System.out.println("end Task");
+            System.out.println("end FixedThreadPoolTaskDemo");
 //        }
     }
 }

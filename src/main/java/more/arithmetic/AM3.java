@@ -58,7 +58,7 @@ public class AM3 {
     public static void main (String args[]) {
         String str = "VIIIIVI";
         System.out.println(str.length() + "==" + str.toCharArray()[0] + "==" + str.indexOf("IV"));
-        System.out.println(romanToInt("MCMXCIV"));
+        System.out.println(romanToInt("IIX"));
     }
 
     /**

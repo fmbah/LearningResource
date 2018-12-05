@@ -1,13 +1,13 @@
 package more.arithmetic;
 
 /**
- * @ClassName A2
+ * @ClassName AM2
  * @Description
  * @Author root
  * @Date 18-11-5 上午9:50
  * @Version 1.0
  **/
-public class A2 {
+public class AM2 {
 
     /**
      *
