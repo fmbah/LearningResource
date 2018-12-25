@@ -1,4 +1,4 @@
-package more.thread.test.设计模式;
+package more.thread.test.设计模式.单例模式;
 
 /**
  * @ClassName D3单例模式静态内置类

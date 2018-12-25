@@ -108,3 +108,6 @@ right(90)
 # 调用done()使得窗口等待被关闭，否则将立刻关闭窗口:
 # done()
 
+
+# def drawStar(x, y):
+

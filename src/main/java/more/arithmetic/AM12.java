@@ -1,7 +1,5 @@
 package more.arithmetic;
 
-import java.util.Arrays;
-
 /**
  * @ClassName AM12
  * @Description

@@ -1,8 +1,6 @@
 package more.thread.test.threadPoolExecutor;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @ClassName FixedThreadPoolTaskDemo
@@ -32,13 +30,27 @@ public class FixedThreadPoolTaskDemo implements Runnable{
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(2);
-        for (int i = 1; i <= 5; i++) {
-            FixedThreadPoolTaskDemo task = new FixedThreadPoolTaskDemo("FixedThreadPoolTaskDemo" + i);
-            System.out.println("Created: " + task.getName());
-            executorService.execute(task);
-        }
+//        for (int i = 1; i <= 5; i++) {
+//            FixedThreadPoolTaskDemo task = new FixedThreadPoolTaskDemo("FixedThreadPoolTaskDemo" + i);
+//            System.out.println("Created: " + task.getName());
+//            executorService.execute(task);
+//        }
+//        executorService.shutdown();
+
+        Future<String> submit = executorService.submit(() -> {
+            try {
+                Thread.sleep(2000);
+                return "1111";
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return null;
+        });
+
+
+        System.out.println("main run.........." + submit.get());
         executorService.shutdown();
     }
 }

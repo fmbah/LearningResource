@@ -1,5 +1,8 @@
 package more.arithmetic;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 /**
  * @ClassName AM11
  * @Description
@@ -45,16 +48,64 @@ public class AM11 {
 
     public static void main(String args[]) {
 
-//        System.out.println(digui(10-1,"1"));
+        System.out.println(digui(20-1,"1"));
 
-        System.out.println(countAndSay(2));
+        System.out.println(countAndSay(20));
+
     }
 
 
+    /**
+     * 个人解法:执行用时: 5 ms, 在Count and Say的Java提交中击败了76.19% 的用户
+     * 功能描述:
+     *
+     * @param:
+     * @return:
+     * @auther: Fmbah
+     * @date: 18-12-17 下午2:38
+     */
     public static String countAndSay(int n) {
 
+        int index = 1;
+        Queue<String> queue = new LinkedList<>();
+        queue.add(index + "");
 
-        return null;
+        while (!queue.isEmpty() && --n > 0) {
+            String poll = queue.poll();
+
+            if (n > 0) {
+                //根据当前项,算出下一项值并写到队列当中去
+                //相应项数字个数 + 相应项数字 ....
+                //1--->11->21->1211->111221
+                int count = 1;
+                StringBuilder sb = new StringBuilder();
+                if (poll.length() == 1) {
+                    sb.append(count).append(poll.charAt(0));
+                } else {
+
+                    for (int i = 1, j = poll.length(); i < j; i++) {
+                        if (poll.charAt(i - 1) == poll.charAt(i)) {
+                            count ++;
+                            if (i == j  - 1) {
+                                sb.append(count).append(poll.charAt(i - 1));
+                            }
+                        } else {
+                            sb.append(count).append(poll.charAt(i - 1));
+                            count = 1;
+                            if (i == j  - 1) {
+                                sb.append(count).append(poll.charAt(i));
+                            }
+                        }
+                    }
+
+                }
+
+                queue.add(sb.toString());
+            }
+
+        }
+
+        return queue.poll();
     }
 
 

@@ -24,7 +24,7 @@ public class AM13 {
 
     /**
      * 个人解法: 执行用时: 140 ms, 在Length of Last Word的Java提交中击败了0.97% 的用户
-     * 功能描述: 都说题目有问题,......
+     * 功能描述:
      *
      * @param:
      * @return:

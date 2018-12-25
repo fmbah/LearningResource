@@ -1,4 +1,4 @@
-package more.thread.test.设计模式;
+package more.thread.test.设计模式.单例模式;
 
 /**
  * @ClassName D2单例模式懒汉模式

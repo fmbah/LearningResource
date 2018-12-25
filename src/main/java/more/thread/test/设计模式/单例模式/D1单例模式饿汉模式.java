@@ -1,4 +1,4 @@
-package more.thread.test.设计模式;
+package more.thread.test.设计模式.单例模式;
 
 /**
  * @ClassName D1单例模式饿汉模式
