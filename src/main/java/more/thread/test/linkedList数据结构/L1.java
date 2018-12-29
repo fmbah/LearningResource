@@ -1,8 +1,6 @@
 package more.thread.test.linkedList数据结构;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @ClassName L1
@@ -19,7 +17,9 @@ public class L1 {
         list.add(2);
         list.add(3);
         list.add(4);
-        System.out.println(list.get(2));
+        System.out.println(list.poll());
+        System.out.println(list.poll());
+        System.out.println(list.poll());
         System.out.println(list.getLast());
     }
 
