@@ -1,5 +1,6 @@
 package more.ftf;
 
+import javax.tools.ToolProvider;
 import java.io.*;
 import java.util.Collections;
 import java.util.HashMap;
@@ -149,6 +150,11 @@ public class F2 {
 
         //mybatis源码分析: https://gitbook.cn/books/5a37b6b66eec7c4f044a75d0/index.html
         //                https://github.com/tuguangquan/mybatis/tree/master/src/main/java/org/apache/ibatis/session
+
+
+        ThreadLocal<HashMap> threadLocal = new ThreadLocal<>();
+        threadLocal.set(new HashMap());
+        threadLocal.get();
     }
 
     private static class MyClassLoader extends ClassLoader {

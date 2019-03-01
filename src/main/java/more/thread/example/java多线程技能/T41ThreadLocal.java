@@ -21,25 +21,27 @@ public class T41ThreadLocal {
      * @date: 18-11-6 上午11:48
      */
     public static ThreadLocal t1 = new ThreadLocal();
-    public static void main(String args[]) {
-        if (t1.get() == null) {
-            System.out.println("从未放过值");
-            t1.set("我的值");
-        }
-        System.out.println(t1.get());
-        System.out.println(t1.get());
-
-        System.out.println("原ThreadLocalget()值为null,被覆盖了!" + Tools41.threadLocalExt.get());
-    }
-
 //    public static void main(String args[]) {
-//        MyThread41A myThread41A = new MyThread41A();
-//        myThread41A.start();
-//        for (int i = 0; i < 100; i++) {
-//            Tools41.threadLocal.set("main_" + i);
-//            System.out.println("get main_" + i + ": " + Tools41.threadLocal.get());
+//        if (t1.get() == null) {
+//            System.out.println("从未放过值");
+//            t1.set("我的值");
 //        }
+//        System.out.println(t1.get());
+//        System.out.println(t1.get());
+//
+//        System.out.println("原ThreadLocalget()值为null,被覆盖了!" + Tools41.threadLocalExt.get());
 //    }
+
+    public static void main(String args[]) {
+        MyThread41A myThread41A = new MyThread41A();
+        myThread41A.start();
+        for (int i = 0; i < 100; i++) {
+            Tools41.threadLocal.set("main_" + i);
+            System.out.println("get main_" + i + ": " + Tools41.threadLocal.get());
+        }
+        MyThread41B myThread41B = new MyThread41B();
+        myThread41B.start();
+    }
 }
 
 class Tools41 {
@@ -61,6 +63,16 @@ class MyThread41A extends Thread {
         for (int i = 0; i < 100; i++) {
             Tools41.threadLocal.set("MyThread41A_" + i);
             System.out.println("get MyThread41A_" + i + ": " + Tools41.threadLocal.get());
+        }
+    }
+}
+class MyThread41B extends Thread {
+    @Override
+    public void run() {
+        super.run();
+        for (int i = 200; i < 300; i++) {
+            Tools41.threadLocal.set("MyThread41B_" + i);
+            System.out.println("get MyThread41B_" + i + ": " + Tools41.threadLocal.get());
         }
     }
 }

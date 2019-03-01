@@ -14,9 +14,9 @@ public class T2 {
         MyThread threadB = new MyThread("B");
         MyThread threadC = new MyThread("C");
 
-        threadA.start();
-        threadB.start();
-        threadC.start();
+//        threadA.start();
+//        threadB.start();
+//        threadC.start();
 
         //记录下MyThread,控制台
 //        由A计算, count = 4
@@ -89,12 +89,17 @@ class MyThread extends Thread {
  *                ,目前简单的解决方式:在同步代码块上加上 synchronized 同步锁关键字,用来限制一个方法或一个类只能有一个线程操作(大部分情况,会有极少情况出现同时有多个线程获得了锁)
  */
 class MyThread1 extends Thread {
-    private int count = 5;
+    private int count = 999995;
 
     @Override
     public void run() {
         super.run();
         count--;
+        try {
+            Thread.sleep(10);//加大了出问题的几率
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("由" + this.getName() + "计算, count = " + count);
     }
 }

@@ -4,9 +4,8 @@ package more.thread.example.java多线程技能;
  * @ClassName T17锁分类
  * @Description
  *              目前知道的关于synchronized锁的分类
- *                  方法锁
+ *                  方法锁/方法内部this锁
  *                  方法内部this.getClass()锁
- *                  方法内部this锁
  *                  方法内部非静态成员变量锁
  *                  静态方法锁/静态关键字锁
  *              这几类锁,锁对象都不同,所以在不同线程进行访问的时候,不会互相影响,只有类型相同,且操作的锁相同才会出现同步的情况

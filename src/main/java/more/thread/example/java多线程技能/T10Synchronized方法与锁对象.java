@@ -11,8 +11,8 @@ public class T10Synchronized方法与锁对象 {
 
     public static void main (String args[]) {
         MyMethod myMethod = new MyMethod();
-        MyThread10_1 myThread10_1 = new MyThread10_1(myMethod);
-        MyThread10_2 myThread10_2 = new MyThread10_2(myMethod);
+        MyThread10_1 myThread10_1 = new MyThread10_1(myMethod, "MyThread10_1");
+        MyThread10_2 myThread10_2 = new MyThread10_2(myMethod, "MyThread10_2");
         myThread10_1.start();
         myThread10_2.start();
     }
@@ -91,8 +91,9 @@ class MyMethod_1 {
 
 class MyThread10_1 extends Thread {
     private MyMethod myMethod;
-    public MyThread10_1(MyMethod myMethod) {
+    public MyThread10_1(MyMethod myMethod, String name) {
         this.myMethod = myMethod;
+        this.setName(name);
     }
     @Override
     public void run() {
@@ -102,8 +103,9 @@ class MyThread10_1 extends Thread {
 }
 class MyThread10_2 extends Thread {
     private MyMethod myMethod;
-    public MyThread10_2(MyMethod myMethod) {
+    public MyThread10_2(MyMethod myMethod, String name) {
         this.myMethod = myMethod;
+        this.setName(name);
     }
     @Override
     public void run() {

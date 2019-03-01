@@ -32,7 +32,7 @@ public class T46Condition等待与通知 {
             e.printStackTrace();
         }
 
-        myReentrantLockConditionService.single();
+//        myReentrantLockConditionService.single();
     }
 
 }
@@ -54,8 +54,8 @@ class MyReentrantLockConditionService {
 //        at more.thread.example.java多线程技能.MyReentrantLockConditionService.await(T46Condition等待与通知.java:34)
 //        at more.thread.example.java多线程技能.MyReentrantConditionThreadA.run(T46Condition等待与通知.java:50)
             System.out.println("等待前,time = " + System.currentTimeMillis());
-//            condition.await(3, TimeUnit.SECONDS);
-            condition.await();
+            condition.await(3, TimeUnit.SECONDS);
+//            condition.await();
             System.out.println("等待完成,time = " + System.currentTimeMillis());
         } catch (InterruptedException e) {
             e.printStackTrace();
