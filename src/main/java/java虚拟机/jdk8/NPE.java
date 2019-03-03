@@ -1,11 +1,18 @@
 package java虚拟机.jdk8;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class NPE {
+
+	private static final ThreadLocal<DateFormat> date = new ThreadLocal<DateFormat>(){
+		@Override
+		protected DateFormat initialValue() {
+			return new SimpleDateFormat("yyyy-MM-dd");
+		}
+	};
+
 
 	public static void main(String[] args) throws Exception{
 
@@ -48,6 +55,12 @@ public class NPE {
 				list2.remove(str);
 			}
 		}
+
+
+		new HashMap(16);
+
+
+
 	}
 
 
