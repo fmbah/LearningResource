@@ -18,8 +18,10 @@ public class NPE {
 
 		User user = new User();
 		user.setName("123");
+		user.setNoun(1);
 		User user1 = new User();
 		user1.setName("456");
+		user1.setNoun(13);
 
 		List list = new ArrayList<>();
 		list.add("3");
@@ -50,16 +52,19 @@ public class NPE {
 		System.out.println(asList.size() + "==" + asList.get(0));
 
 
-		for (String str : list2) {
-			if ("123".equals(str)) {
-				list2.remove(str);
-			}
-		}
+//		for (String str : list2) {
+//			if ("123".equals(str)) {
+//				list2.remove(str);
+//			}
+//		}
 
 
 		new HashMap(16);
 
-
+		List<User> users = new ArrayList<>();
+//		users.add(user);
+//		users.add(user1);
+		System.out.println(users.stream().mapToInt(User::getNoun).sum());
 
 	}
 
@@ -67,6 +72,15 @@ public class NPE {
 }
 class User {
 	private String name;
+	private Integer noun;
+
+	public Integer getNoun() {
+		return noun;
+	}
+
+	public void setNoun(Integer noun) {
+		this.noun = noun;
+	}
 
 	public String getName() {
 		return name;
