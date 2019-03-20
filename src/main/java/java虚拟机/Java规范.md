@@ -113,7 +113,7 @@
     * 有序性（sort）:按照一定规则进行排序的
     * 稳定性（order）  每次遍历次序是一致的
         * ArrayList 是 order/unsort
-        * HashMap 是 unsort/order
+        * HashMap 是 unorder/sort
         * TreeSet 是 sort/order
     * 避免使用List.contains
     

@@ -1,8 +1,12 @@
 package java虚拟机.jdk8;
 
+import io.netty.util.internal.ThreadLocalRandom;
+
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class NPE {
 
@@ -66,6 +70,24 @@ public class NPE {
 //		users.add(user1);
 		System.out.println(users.stream().mapToInt(User::getNoun).sum());
 
+
+		double ceil = Math.ceil(new BigDecimal(23).divide(new BigDecimal(40)).doubleValue());
+		System.out.println(ceil);
+		IntStream.range(0, 1).parallel().forEach(System.out::print);
+
+		int i = 1;
+		do {
+			System.out.println("a");
+		} while(--i > 0);
+
+
+		HashMap<String, String> hashMap = new HashMap<>();
+		hashMap.put("k", "1");
+		hashMap.put("k", "2");
+		hashMap.keySet().stream().forEach(b -> System.out.println(hashMap.get(b)));
+
+
+		System.out.println(ThreadLocalRandom.current().nextInt(10));
 	}
 
 
