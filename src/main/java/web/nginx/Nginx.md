@@ -100,3 +100,20 @@
             }
         }
     ````
+    ````
+        [以下内容是/usr/local/nginx/vhost/conf.d目录下的barraba.conf文件,可以看到对请求为http://localhost:80/的请求反向代理到9999端口的服务去了]
+        [而http://localhost:80/barraba的请求则会将/home/webgame/barraba-html/barraba目录下的文件夹显示出来，如果里面有静态文件资源则会直接显示出来]
+        server{
+            listen  80;
+            server_name     localhost;
+            client_max_body_size 20m;
+            location / {
+                proxy_pass      http://localhost:9999;
+            }
+            root    /home/webgame/barraba-html;
+            location /barraba {
+                autoindex       on;
+            }
+        }
+    
+    ````
