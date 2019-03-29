@@ -91,9 +91,9 @@
 #####5. 集合处理
     * equals/hashCode, String, Set, Map
     * ArrayList.subList不可转换成ArrayList, SubList是ArrayList的内部类, 对原集合的修改均会ConcurrentModificationException异常
+        * String[] strs = {"1", "2", "3"}; strs[0] = "lalal" ==> list也会变化
     * toArray(T[] a), 不会自动转型,并且必须传入数量一致参数一致的数组,否则多的位置会null,少的位置会重新调整大小
     * Arrays.asList(), 不可增删,会报UnsupportedOperationException异常, 返回的是内部类,未实现原集合的修改方法, 适配器模式, 只是转换接口, 后台仍是数组
-        * String[] strs = {"1", "2", "3"}; strs[0] = "lalal" ==> list也会变化
         * List list = Arrays.asList(strs); list.add("123") ==> 异常
     * PECS(Producer Extends Customer Super)频繁读取<? extends T>, 经常插入<? super T>
     * foreach不要remove元素[ConcurrentModificationException]； iterator可循环时remove元素,并发下加锁

@@ -20,6 +20,7 @@
     * Stream.of("color=红色").map(s -> s.split("=")).flatMap(Arrays::stream).collect(Collectors.toList()).forEach(System.out::println)
     * System.out.println(Stream.of("s", "2", "1").collect(Collectors.joining(",")))
     * LongStream.rangeClosed(1, 10L).parallel().reduce(0, Long::sum);
+    * Integer[] a = {1,2,3}, b = {4,5,6};List<Object> n = new ArrayList<Object>();Stream.of(a, b).flatMap(Stream::of).forEach(n::add);
 #####3. 日期类
     * LocalDate
     * LocalTime
