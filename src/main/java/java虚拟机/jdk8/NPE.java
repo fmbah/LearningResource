@@ -1,8 +1,12 @@
 package java虚拟机.jdk8;
 
+import io.netty.util.internal.ThreadLocalRandom;
+
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class NPE {
 
@@ -18,8 +22,10 @@ public class NPE {
 
 		User user = new User();
 		user.setName("123");
+		user.setNoun(1);
 		User user1 = new User();
 		user1.setName("456");
+		user1.setNoun(13);
 
 		List list = new ArrayList<>();
 		list.add("3");
@@ -50,23 +56,53 @@ public class NPE {
 		System.out.println(asList.size() + "==" + asList.get(0));
 
 
-		for (String str : list2) {
-			if ("123".equals(str)) {
-				list2.remove(str);
-			}
-		}
+//		for (String str : list2) {
+//			if ("123".equals(str)) {
+//				list2.remove(str);
+//			}
+//		}
 
 
 		new HashMap(16);
 
+		List<User> users = new ArrayList<>();
+//		users.add(user);
+//		users.add(user1);
+		System.out.println(users.stream().mapToInt(User::getNoun).sum());
 
 
+		double ceil = Math.ceil(new BigDecimal(23).divide(new BigDecimal(40)).doubleValue());
+		System.out.println(ceil);
+		IntStream.range(0, 1).parallel().forEach(System.out::print);
+
+		int i = 1;
+		do {
+			System.out.println("a");
+		} while(--i > 0);
+
+
+		HashMap<String, String> hashMap = new HashMap<>();
+		hashMap.put("k", "1");
+		hashMap.put("k", "2");
+		hashMap.keySet().stream().forEach(b -> System.out.println(hashMap.get(b)));
+
+
+		System.out.println(ThreadLocalRandom.current().nextInt(10));
 	}
 
 
 }
 class User {
 	private String name;
+	private Integer noun;
+
+	public Integer getNoun() {
+		return noun;
+	}
+
+	public void setNoun(Integer noun) {
+		this.noun = noun;
+	}
 
 	public String getName() {
 		return name;
