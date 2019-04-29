@@ -13,6 +13,7 @@
     * alter database a default character set utf8mb4 collate=utf8mb4_general_ci;
     
      1、一张表，里面有ID自增主键，当insert了17条记录之后，删除了第15,16,17条记录，再把Mysql重启，再insert一条记录，这条记录的ID是18还是15 ？
+     
   
       2、Mysql的技术特点是什么？
   
@@ -145,7 +146,7 @@
   
       22、MyISAM Static和MyISAM Dynamic有什么区别？
   
-  在MyISAM Static上的所有字段有固定宽度。动态MyISAM表将具有像TEXT，BLOB等字段，以适应不同长度的数据类型。点击这里有一套最全阿里面试题总结。
+  在MyISAM Static上的所有字段有固定宽度。动态MyISAM表将具有像TEXT，BLOB等字段，以适应不同长度的数据类型。
   
   MyISAM Static在受损情况下更容易恢复。
   
@@ -1083,10 +1084,11 @@ alter table 表名 alter column 列名 set default 5;直接操作frm数据文件
 		select <cols> from <表名> inner join (select <primary key col> from <表名> where <col>='M' order by <col> limit 10000, 10) as x using(primary key col);
 		也可以between to
 	in（子查询） =》exists（子查询）
+        explain select * from tb_item where tb_item.id in (select tb_order_item.item_id from tb_order_item);
+        explain select * from tb_item where exists (select 1 from tb_order_item where tb_item.id = tb_order_item.item_id);
 	update 表1 inner join (子查询) as 表2 using(链接字段) set 表1.列 = 表2.列
 	count(*) 忽略行中每列值，直接统计总行数 count(列) 统计不为null的列总行树
 	explain select (select count(*) from tb_item) - count(*) from tb_item where tb_item.id > 20;优化器会直接将子查询优化为常数
-	
 	group by 列（应为索引列）
 查询的步骤：
 	缓存-》sql解释器优化器变为执行计划-》调用存储引擎的api执行查询-》返回查询结果
