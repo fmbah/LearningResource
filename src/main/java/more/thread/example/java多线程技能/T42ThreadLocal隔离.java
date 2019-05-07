@@ -12,6 +12,7 @@ import java.util.Date;
 public class T42ThreadLocal隔离 {
     public static void main(String args[]) {
         MyThread42 myThread42 = new MyThread42();
+        myThread42.setName("线程1");
         myThread42.start();
         try {
             Thread.sleep(1000);
@@ -19,6 +20,7 @@ public class T42ThreadLocal隔离 {
             e.printStackTrace();
         }
         MyThread42_1 myThread42_1 = new MyThread42_1();
+        myThread42_1.setName("线程2");
         myThread42_1.start();
     }
 }
@@ -35,7 +37,7 @@ class MyThread42 extends Thread {
             if (Tools42.local.get() == null) {
                 Tools42.local.set(new Date());
             }
-            System.out.println("MyThread42 "+ i +": " + Tools42.local.get().getTime());
+            System.out.println(Thread.currentThread().getName()+ "____" + i +": " + Tools42.local.get().getTime());
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -53,7 +55,7 @@ class MyThread42_1 extends Thread {
             if (Tools42.local.get() == null) {
                 Tools42.local.set(new Date());
             }
-            System.out.println("MyThread42_1 "+ i +": " + Tools42.local.get().getTime());
+            System.out.println(Thread.currentThread().getName()+ "____" + i +": " + Tools42.local.get().getTime());
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {

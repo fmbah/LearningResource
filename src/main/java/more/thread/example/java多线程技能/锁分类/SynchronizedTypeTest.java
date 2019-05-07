@@ -23,13 +23,16 @@ public class SynchronizedTypeTest {
 }
 
 class S {
+    private Object o = new Object();
+
+
     public synchronized void print() {//方法锁
         System.out.println("0");
 
     }
 
     public void print1() {//方法锁
-        synchronized (this) {
+        synchronized (getClass()) {
             System.out.println("1");
         }
     }

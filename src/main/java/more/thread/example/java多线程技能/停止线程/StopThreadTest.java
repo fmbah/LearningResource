@@ -32,7 +32,8 @@ class RunningThread extends Thread {
             for (;i<1000000;i++) {
                 if (this.isInterrupted()) {
 //                throw new RuntimeException("终止线程");
-                    return;
+//                    return;
+//                    break;
                 }
                 System.out.println(this.getName()+"="+this.isInterrupted()+"="+i);
             }

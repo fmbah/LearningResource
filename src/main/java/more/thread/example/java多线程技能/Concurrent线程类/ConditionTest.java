@@ -15,23 +15,35 @@ import java.util.concurrent.locks.ReentrantLock;
  **/
 public class ConditionTest {
 
-    private ArrayList<Integer> arrayList = new ArrayList<Integer>();
+    private static final ArrayList<Integer> arrayList = new ArrayList<Integer>();
     private Lock lock = new ReentrantLock();    //注意这个地方
     private Condition condition = lock.newCondition();
     public static void main(String[] args)  {
         final ConditionTest test = new ConditionTest();
 
-        new Thread(){
+        Thread tA = new Thread(){
             public void run() {
                 test.insert(Thread.currentThread());
             };
-        }.start();
+        };
+        tA.start();
+        Thread tB = new Thread(){
+            public void run() {
+                test.insert(Thread.currentThread());
+            };
+        };
 
-        new Thread(){
-            public void run() {
-                test.insert(Thread.currentThread());
-            };
-        }.start();
+        tB.start();
+
+
+        try {
+            tA.join();
+            tB.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(arrayList.size());
     }
 
     public void insert(Thread thread) {

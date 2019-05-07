@@ -23,9 +23,9 @@ public class T44ReentrantLock使用 {
 
         myReentrantLock44Thread_0.start();
         myReentrantLock44Thread_1.start();
-        myReentrantLock44Thread_2.start();
-        myReentrantLock44Thread_3.start();
-        myReentrantLock44Thread_4.start();
+//        myReentrantLock44Thread_2.start();
+//        myReentrantLock44Thread_3.start();
+//        myReentrantLock44Thread_4.start();
     }
 }
 
@@ -40,16 +40,22 @@ class MyReentrantLock44Service {
     public void testMethod () {
         lock.lock();//获取锁
         for (int i = 0; i < 5; i++) {
-            System.out.println("ThreadName = " + Thread.currentThread().getName() + "======>" + i);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("testMethod = " + Thread.currentThread().getName() + "======>" + i);
         }
         System.out.println();
         System.out.println();
         lock.unlock();//释放锁
     }
 
-    public synchronized void testMethodSynchronized () {
+    synchronized
+    public  void testMethodSynchronized () {
         for (int i = 0; i < 5; i++) {
-            System.out.println("ThreadName = " + Thread.currentThread().getName() + "======>" + i);
+            System.out.println("testMethodSynchronized = " + Thread.currentThread().getName() + "======>" + i);
         }
         System.out.println();
         System.out.println();

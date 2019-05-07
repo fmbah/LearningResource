@@ -37,7 +37,11 @@ class MyThread31 implements Runnable {
     static public Runnable myThread32 = new Runnable() {
         public void run() {
             synchronized (lock) {
-                lock.notify();
+//                lock.notify();
+
+
+                System.out.println("wait notify 会自动释放锁，");
+
             }
         }
     };
