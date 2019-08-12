@@ -14,8 +14,8 @@ public class ConditionDemo {
     public static void main(String[] args) {
         new Thread(new Producer()).start();
         new Thread(new Consumer()).start();
-        new Thread(new Consumer()).start();
-        new Thread(new Consumer()).start();
+//        new Thread(new Consumer()).start();
+//        new Thread(new Consumer()).start();
 
     }
 
@@ -31,7 +31,12 @@ public class ConditionDemo {
 
                 lock.lock();
                 // TODO: 为什么不用if
+                // 参考：https://blog.csdn.net/u011863767/article/details/59731447
+                // 永远在synchronized的方法或对象里使用wait、notify和notifyAll，不然Java虚拟机会生成 IllegalMonitorStateException。
+                // 永远在while循环里而不是if语句下使用wait。这样，循环会在线程睡眠前后都检查wait的条件，并在条件实际上并未改变的情况下处理唤醒通知。
+                // 永远在多线程间共享的对象（在生产者消费者模型里即缓冲区队列）上使用wait。
                 while (taskList.isEmpty()) {
+//                if (taskList.isEmpty()) {
                     try {
                         empty.await();
                     } catch (InterruptedException e) {

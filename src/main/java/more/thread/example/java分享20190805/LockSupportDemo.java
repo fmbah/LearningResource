@@ -60,7 +60,7 @@ public class LockSupportDemo {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        LockSupport.unpark(thread);
+        LockSupport.unpark(thread);
 
     }
 

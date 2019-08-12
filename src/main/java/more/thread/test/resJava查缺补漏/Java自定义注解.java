@@ -35,6 +35,7 @@ public class Java自定义注解 {
 @Retention(RetentionPolicy.RUNTIME)//什么时候使用该注解
 @Documented//注解是否包含在JavaDoc中
 @Inherited//是否允许子类继承该注解
+@Deprecated//受保护注解，标记下次后续可能会删除了
 @interface Name{
     String name() default "defaultName";
 }
