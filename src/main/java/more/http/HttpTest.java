@@ -1,11 +1,13 @@
 package more.http;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 public class HttpTest {
 
@@ -23,20 +25,34 @@ public class HttpTest {
         System.out.println(url.getQuery());
 
         HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
-
         urlConnection.setRequestMethod("GET");
+        // post 设置 true; get 设置 false
         urlConnection.setDoOutput(true);
 
+        // 建立链接   三次握手完成
         urlConnection.connect();
 
-        InputStream inputStream = urlConnection.getInputStream();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        String line = null;
         StringBuilder builder = new StringBuilder();
-        while((line = bufferedReader.readLine()) != null) {
-            builder.append(line);
-        }
-        bufferedReader.close();
+        // 数据交换完成
+//        InputStream inputStream = urlConnection.getInputStream();
+//        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+//        String line = null;
+//        while((line = bufferedReader.readLine()) != null) {
+//            builder.append(line);
+//        }
+//        bufferedReader.close();
+
+//        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+//        byte[] readBytes = new byte[1024];
+////        int available = bufferedInputStream.available();
+//        int i;
+//        while ((i = bufferedInputStream.read(readBytes)) != -1) {
+//            String readStr = new String(readBytes, "UTF-8");
+//            builder.append(readStr);
+//        }
+
+        TimeUnit.SECONDS.sleep(2L);
+
         urlConnection.disconnect();
 
         System.out.println("结果： " + builder.toString());
