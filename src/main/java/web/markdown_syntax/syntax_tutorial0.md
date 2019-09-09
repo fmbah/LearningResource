@@ -42,3 +42,10 @@ As Grace Hopper said:
 
 # EMOJI
 [表情地址](https://www.webpagefx.com/tools/emoji-cheat-sheet/)
+
+~~删除线~~
+
+# 分割线
+***
+---
+___
