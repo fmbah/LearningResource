@@ -72,14 +72,36 @@ public class ThreadPoolTest {
 //		executor.shutdown();
 
 		ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-		singleThreadExecutor.execute(() -> {
-			System.out.println("thread sleep 2s");
+//		singleThreadExecutor.execute(() -> {
+//			System.out.println("thread sleep 2s");
+//			try {
+//				Thread.sleep(2000);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//		});
+//		singleThreadExecutor.shutdown();
+
+		Future<?> future = singleThreadExecutor.submit(() -> {
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(4000L);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			return "1";
 		});
+
+		try {
+			Object o = future.get();
+
+
+			System.out.println(o);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+
 		singleThreadExecutor.shutdown();
 	}
 
