@@ -78,7 +78,7 @@ SendResult sendResult = producer.send(msg, new MessageQueueSelector(){
     }, NumberUtils.INTEGER_ZERO);
 ````
 
-5. [事物消息]，两阶段提交，最终数据一致性
+5. [事物消息]，两阶段提交，最终数据一致性；![具体原理](https://img-blog.csdnimg.cn/20190510231845733.png)
 
 6. [广播消息]|[批量消息]，默认消费模式是集群消费模式，改为广播消费模式，支持消息被每个消费者消费
 
