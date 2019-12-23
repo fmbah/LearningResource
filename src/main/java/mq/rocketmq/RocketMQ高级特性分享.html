@@ -1,0 +1,431 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RocketMQ高级特性分享</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><p></p><div class="toc"><h3>文章目录</h3><ul><ul><li><a href="#_1">事务消息</a></li><ul><li><a href="#_2">场景分析</a></li><li><a href="#_24">基本思路及问题所在</a></li><li><a href="#_62">基本概念</a></li><li><a href="#RocketMQ_70">RocketMQ-事务消息设计思路</a></li><ul><li><a href="#_73">两阶段提交</a></li><li><a href="#_89">事务状态定时回查</a></li><li><a href="#API_94">关键API</a></li></ul></ul><li><a href="#_118">延迟消息</a></li><ul><li><a href="#_120">场景分析</a></li><li><a href="#API_136">关键API</a></li><li><a href="#RocketMQ_155">RocketMQ延迟级别</a></li><li><a href="#Producer_Demo_169">延迟消息Producer Demo</a></li><li><a href="#_209">实现原理</a></li><li><a href="#_254">自定义延迟时间</a></li><ul><li><a href="#Java_259">Java中的延迟任务</a></li><li><a href="#TimeWheel_295">TimeWheel时间轮</a></li></ul></ul><li><a href="#_330">顺序消息</a></li><ul><li><a href="#_332">全局顺序</a></li><li><a href="#_337">分区顺序</a></li><li><a href="#API_343">关键API</a></li><li><a href="#Producer_Demo_367">Producer Demo</a></li><li><a href="#Consumer_Demo_422">Consumer Demo</a></li><li><a href="#_458">实现思路及原理</a></li></ul></ul></ul></div><p></p>
+<h2><a id="_1"></a>事务消息</h2>
+<h3><a id="_2"></a>场景分析</h3>
+<p>假设有两个用户，其银行账户不在一个银行中，服务不同，数据库也不同。现在要实现一个功能：用户A给B转账100块，具体怎么做才能保证资金安全？</p>
+<p>关键点是什么？<strong>本质上是如何解决分布式事务问题</strong></p>
+<p>常见的分布式事务中间件：TxLCN、GTS、TCC-Transaction</p>
+<p>常见的分布式事务解决方案：</p>
+<ol>
+<li>TCC(资源隔离+补偿）</li>
+<li>Saga(柔性补偿事务)</li>
+<li>XA(基于数据库实现的全局事务)</li>
+<li>全局事务(Transaction Manager 事务管理器)</li>
+<li><strong>基于消息的最终一致性方案</strong></li>
+</ol>
+<p><font color="red">业务上是否追求强一致性？还是可以接受一定程度的延迟？</font></p>
+<p>很多场景不求事务的强一致性，只需达到事务的最终一致性，比如上文中用户A扣钱后，B账户的钱是不是立马就到账了？</p>
+<p>这种情况下事务消息可以很好的满足需求。</p>
+<h3><a id="_24"></a>基本思路及问题所在</h3>
+<p>上面提到了，要保证本地事务与消息的发送在一个事务中，如果以A给B转账100块为例子(A和B分别处在2个微服务中，对应2个数据库),具体怎么做呢？</p>
+<ul>
+<li>
+<p><strong>场景一</strong><br>
+先执行A扣钱100本地事务，再发送给B一条扣钱100消息，行么?<br>
+假设碰到网络问题，消息发送失败了。A扣了100，B却没加钱，肯定不行</p>
+</li>
+<li>
+<p><strong>场景二</strong><br>
+那先发给B发送一条扣钱100消息，再执行A扣钱本地事务，行么？<br>
+如果消息发送成功了，这时候A服务所在数据库宕机了，岂不是B所在系统消费了消息，B加了100，A却没扣钱，也不对</p>
+</li>
+</ul>
+<p>问题关键点是什么？</p>
+<p><font color="red">只要A扣钱和发送消息不是一个原子操作，即不在一个事务中完成，那么，无论先后顺序如何，都会出现数据不一致性问题</font></p>
+<p>我搞个本地消息表不就行了？</p>
+<ul>
+<li><strong>场景三</strong><br>
+在一个本地事务中，同时操作如下两步<br>
+1、A扣钱100<br>
+2、将要发送的消息记录存入A所在数据库中(如transfer_money_message表)</li>
+</ul>
+<p>那么A扣钱成功的同时，一定会有一条对应B扣钱的消息记录在数据库中，然后A所在系统单独启动一个定时器去扫描该消息表，并将状态为待发送的消息，投递到消息服务器中，失败重试，直到消息发送成功</p>
+<p>这种方案行不行？当然可以，那么缺点又是什么？显而易见</p>
+<p>业务方需要单独设计消息表，及定时发送消息的定时器，增加了与业务无关的开发负担</p>
+<p>RocketMq通过将本地事务与消息的发送放在一个本地事务中，来保证</p>
+<ul>
+<li><strong>本地事务执行成功时，消息一定被成功投递到消息服务器中</strong></li>
+<li>利用消息中间件的高可靠性，保证消息一定会被下游业务所消费至少一次</li>
+</ul>
+<h3><a id="_62"></a>基本概念</h3>
+<p>再介绍RocketMq消息事务前，先介绍下几个关键名词</p>
+
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>prepare消息</td>
+<td>又名Half Message，半消息，标识该消息<font color="red">处于"暂时不能投递"状态，不会被Comsumer所消费</font>，待服务端收到生成者对该消息的commit或者rollback响应后，消息会被正常投递或者回滚(丢弃)消息</td>
+</tr>
+<tr>
+<td>RMQ_SYS_TRANS_HALF_TOPIC</td>
+<td>prepare消息在被投递到Mq服务器后，会存储于Topic为RMQ_SYS_TRANS_HALF_TOPIC的消费队列中</td>
+</tr>
+<tr>
+<td>RMQ_SYS_TRANS_OP_HALF_TOPIC</td>
+<td>在prepare消息被commit或者rollback处理后，会存储到Topic为RMQ_SYS_TRANS_OP_HALF_TOPIC的队列中，标识prepare消息已被处理</td>
+</tr>
+</tbody>
+</table><h3><a id="RocketMQ_70"></a>RocketMQ-事务消息设计思路</h3>
+<p>两个核心概念：<strong>两阶段提交</strong>、<strong>事务状态定时回查</strong></p>
+<h4><a id="_73"></a>两阶段提交</h4>
+<p>关于两阶段提交的基本概念，贴上一张图来说明<br>
+<img src="https://img-blog.csdnimg.cn/20190904150939664.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>上面已经提到，因为消息发送是一个远程调用，由于网络的不稳定，无法和本地事务的执行处于一个原子操作中，针对这个缺点，RocketMQ基于两阶段提交协议做了如下改动</p>
+<ul>
+<li>
+<p>第一阶段：<strong>生产者向MQ服务器发送事务消息(prepare消息)</strong>，服务端确认后回调通知生产者执行本地事务(此时消息为Prepare消息，存储于RMQ_SYS_TRANS_HALF_TOPIC队列中，不会被消费者消费)</p>
+</li>
+<li>
+<p>第二阶段：生产者执行完本地事务后(业务执行完成，同时将消息唯一标记，如transactionId与该业务执行记录同时入库，方便事务回查)，<strong>根据本地事务执行结果，返回Commit/Rollback/Unknow状态码</strong></p>
+<p>1、服务端若收到Commit状态码，则将prepare消息变为提交(正常消息，可被消费者消费)<br>
+2、收到Rollback则对消息进行回滚(丢弃消息)<br>
+3、若状态为Unknow，则等待MQ服务端定时发起消息状态回查，超过一定重试次数或者超时，消息会被丢弃</p>
+</li>
+</ul>
+<p>引用一张流程图来说明消息事务的两阶段提交<br>
+<img src="https://img-blog.csdnimg.cn/20190510231845733.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
+<h4><a id="_89"></a>事务状态定时回查</h4>
+<p>在第二阶段中，生产者在本地事务执行完成后，需要向MQ服务器返回响应状态码，发送状态码的过程也是通过Netty发送网络请求，假设由于网络原因发送失败怎么办？本地事务已经提交/回滚了，但是Commit/Rollback状态码却没发出去，那么MQ服务器上这条prepare消息状态岂不是无法被投递/回滚</p>
+<p>因此，MQ服务端会定时扫描存储于RMQ_SYS_TRANS_HALF_TOPIC中的消息，若消息未被处理，则向消费发送者发起回调检查，检查消息对应本地事务执行状态。从而保证消息事务状态最终能和本地事务的状态一致。上图中的4、5、6就是MQ服务端定时回查步骤。</p>
+<h4><a id="API_94"></a>关键API</h4>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">TransactionListener</span> <span class="token punctuation">{</span>
+    <span class="token comment">/**
+     * 半消息发送成功时，调用该方法执行本地事务
+     *
+     * @param msg Half(prepare) message
+     * @param arg Custom business parameter
+     * @return Transaction state
+     */</span>
+    LocalTransactionState <span class="token function">executeLocalTransaction</span><span class="token punctuation">(</span>final Message msg<span class="token punctuation">,</span> final Object arg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/**
+     * 消息发送端未返回本地事务执行状态时，broker定时调用该接口获取本地事务执行状态
+     *
+     * @param msg Check message
+     * @return Transaction state
+     */</span>
+    LocalTransactionState <span class="token function">checkLocalTransaction</span><span class="token punctuation">(</span>final MessageExt msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2><a id="_118"></a>延迟消息</h2>
+<h3><a id="_120"></a>场景分析</h3>
+<p>问题：假设有这么一个需求，用户下单后如果30分钟未支付，则该订单需要被关闭。你会怎么做？</p>
+<p>最简单的做法，可以服务端启动个定时器，隔个几秒扫描数据库中待支付的订单，如果(当前时间-订单创建时间)&gt;30分钟，则关闭订单。</p>
+<p>这种方案优点是实现简单，缺点呢？</p>
+<p>定时扫描意味着隔个几秒就得查一次数据库，频率高的情况下，如果数据库中订单总量特别大，这种高频扫描会对数据库带来一定压力，待付款订单特别多时(做个爆品秒杀活动，或者啥促销活动)，若一次性查到内存中，容易引起宕机，需要分页查询，多少也会有一定数据库层面压力</p>
+<p>那么有没其他解决方案？关键有2点设计要求</p>
+<ol>
+<li>能够在指定时间间隔后触发某个业务操作</li>
+<li>能够应对业务数据量特别大的特殊场景</li>
+</ol>
+<p>RocketMQ延时消息能够完美的解决上述需求，正常的消息在投递后会立马被消费者所消费，而<font color="red">延时消息在投递时，需要设置指定的延时级别，即等到特定的时间间隔后消息才会被消费者消费</font>，这样就将数据库层面的压力转移到了MQ中，也不需要手写定时器，降低了业务复杂度，同时MQ自带削峰及消息堆积功能，能够很好的应对业务高峰</p>
+<h3><a id="API_136"></a>关键API</h3>
+<p>RocketMQ</p>
+<pre><code class="prism language-javascript"><span class="token comment">//设置延迟级别</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setDelayTimeLevel</span><span class="token punctuation">(</span>int level<span class="token punctuation">)</span> <span class="token punctuation">;</span>
+</code></pre>
+<p>ONS</p>
+<pre><code class="prism language-javascript">
+   <span class="token comment">/**
+     * 设置消息的定时投递时间（绝对时间),最大延迟时间为7天.
+     */</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setStartDeliverTime</span><span class="token punctuation">(</span>final long value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h3><a id="RocketMQ_155"></a>RocketMQ延迟级别</h3>
+<p>设置消息延时级别的方法是<code>setDelayTimeLevel()</code>，目前RocketMQ不支持任意时间间隔的延时消息，只支持特定级别的延时消息，什么意思呢？</p>
+<p>看下MQ中默认延时级别配置，延时级别配置代码在MessageStoreConfig#messageDelayLevel中</p>
+<pre><code>String messageDelayLevel = "1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h"
+</code></pre>
+<p>延时级别1对应延时1秒后发送消息<br>
+延时级别2对应延时5秒后发送消息<br>
+延时级别3对应延时10秒后发送消息<br>
+以此类推。。</p>
+<h3><a id="Producer_Demo_169"></a>延迟消息Producer Demo</h3>
+<p>延时消息的关键点在于Producer生产者需要给消息设置特定延时级别，消费端代码与正常消费者没有差别。</p>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Producer</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> throws MQClientException<span class="token punctuation">,</span> InterruptedException <span class="token punctuation">{</span>
+
+        DefaultMQProducer producer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">DefaultMQProducer</span><span class="token punctuation">(</span><span class="token string">"please_rename_unique_group_name"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">//设置namesrv地址</span>
+        producer<span class="token punctuation">.</span><span class="token function">setNamesrvAddr</span><span class="token punctuation">(</span><span class="token string">"111.231.110.149:9876"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">//启动生产者</span>
+        producer<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">//发送10条消息</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>int i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">10</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                Message msg <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Message</span><span class="token punctuation">(</span><span class="token string">"TopicTest"</span> <span class="token comment">/* Topic */</span><span class="token punctuation">,</span>
+                    <span class="token string">"TagA"</span> <span class="token comment">/* Tag */</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">(</span><span class="token string">"test message"</span> <span class="token operator">+</span> i<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>RemotingHelper<span class="token punctuation">.</span><span class="token constant">DEFAULT_CHARSET</span><span class="token punctuation">)</span> <span class="token comment">/* Message body */</span>
+                <span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment">//设置消息延时级别  3对应10秒后发送</span>
+                msg<span class="token punctuation">.</span><span class="token function">setDelayTimeLevel</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                SendResult sendResult <span class="token operator">=</span> producer<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%s%n"</span><span class="token punctuation">,</span> sendResult<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                Thread<span class="token punctuation">.</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">/*
+         * Shut down once the producer instance is not longer in use.
+         */</span>
+        producer<span class="token punctuation">.</span><span class="token function">shutdown</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3><a id="_209"></a>实现原理</h3>
+<p>为什么事务消息中的半消息及延迟消息中的投递的消息不会被Consumer立即消费呢?</p>
+<p>以延迟消息为例，延时消息在发送时，设置了delayLevel，两个问题</p>
+<ol>
+<li>延迟级别设置后与普通消息有什么区别呢？</li>
+<li>broker接收到一个设置了延迟级别的消息后，持久化时又做了哪些特殊处理呢？</li>
+</ol>
+<p>先看下Message#setDelayTimeLevel方法代码，可以看到延迟级别设置后，消息体的属性里多了一个PROPERTY_DELAY_TIME_LEVEL的属性，其值为“Delay”，value为延迟级别</p>
+<pre><code>public void setDelayTimeLevel(int level) {
+        this.putProperty(MessageConst.PROPERTY_DELAY_TIME_LEVEL, String.valueOf(level));
+    }
+</code></pre>
+<pre><code>public static final String PROPERTY_DELAY_TIME_LEVEL = "DELAY";
+</code></pre>
+<p>消息持久化实现类：CommitLog#putMessage<br>
+<img src="https://img-blog.csdnimg.cn/20190824170212243.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>延时消息发送时核心就是两点</p>
+<ol>
+<li>替换消息的topic为特定延时消息topic，queueId为delayLevel-1</li>
+<li>备份消息原有的topic，queueId，方便后面重新取出进行消息投递</li>
+</ol>
+<p>如何判断延时消息到点应该被消费了呢？ScheduleMessageService#start  <strong>定时器实现</strong></p>
+<p><img src="https://img-blog.csdnimg.cn/20190526191240698.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
+<p>DeliverDelayedMessageTimerTask中取出消息，与当前时间做比较，如果应该投递，恢复其topic，queueId，重新投递消息</p>
+<p>总结下</p>
+<ol>
+<li>producer端设置消息delayLevel延迟级别，消息属性DELAY中存储了对应了延时级别</li>
+<li>broker端收到消息后，判断延时消息延迟级别，如果大于0，则备份消息原始topic，queueId，并将消息topic改为延时消息队列特定topic(SCHEDULE_TOPIC)，queueId改为延时级别-1</li>
+<li>mq服务端ScheduleMessageService中，为每一个延迟级别单独设置一个定时器，定时(每隔1秒)拉取对应延迟级别的消费队列</li>
+<li>根据消费偏移量offset从commitLog中解析出对应消息</li>
+<li>从消息tagsCode中解析出消息应当被投递的时间，与当前时间做比较，判断是否应该进行投递</li>
+<li>若到达了投递时间，则构建一个新的消息，并从消息属性中恢复出原始的topic，queueId，并清除消息延迟属性，从新进行消息投递</li>
+</ol>
+<h3><a id="_254"></a>自定义延迟时间</h3>
+<p>开源版本延迟消息缺点:<strong>固定了Level，不够灵活，最多只能支持18个Level</strong></p>
+<h4><a id="Java_259"></a>Java中的延迟任务</h4>
+<ul>
+<li><strong>Timer</strong></li>
+</ul>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        Timer timer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Timer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">//在3秒后执行run方法，之后每隔1秒执行一次run方法</span>
+        timer<span class="token punctuation">.</span><span class="token function">schedule</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">TimerTask</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            @Override
+            <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"执行任务"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">3000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<ul>
+<li><strong>ScheduledThreadPoolExecutor</strong></li>
+</ul>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ScheduledExecutorService scheduledExecutorService
+                <span class="token operator">=</span> Executors<span class="token punctuation">.</span><span class="token function">newSingleThreadScheduledExecutor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        scheduledExecutorService<span class="token punctuation">.</span><span class="token function">schedule</span><span class="token punctuation">(</span>
+                <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"执行任务"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">3000</span><span class="token punctuation">,</span>
+                TimeUnit<span class="token punctuation">.</span><span class="token constant">MILLISECONDS</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+</code></pre>
+<p>其原理都是基于最小堆实现的延迟队列DelayQueue</p>
+<p><img src="https://img-blog.csdnimg.cn/20190828100917744.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>插入任务的时间复杂度为Olog(n)，消息TPS较高时性能仍不够快，有没O(1)复杂度的方案呢？</p>
+<h4><a id="TimeWheel_295"></a>TimeWheel时间轮</h4>
+<p>部分内容摘自</p>
+<blockquote>
+<p>https://www.cnblogs.com/hzmark/p/mq-delay-msg.html</p>
+</blockquote>
+<p>Netty、Kafka中使用TimeWheel来优化I/O超时的操作</p>
+<p><img src="https://img-blog.csdnimg.cn/20190828101542501.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+ticksPerWheel：槽位数<br>
+tick：每个槽位的时间间隔</p>
+<p>假设这个延迟时间为X秒，那么X%(ticksPerWheel * tick)可以计算出X所属的TimeWheel中位置</p>
+<p>TimeWheel的size为8，那么延迟1秒和9秒的消息都处在一个链表中。如果用户先发了延迟9秒的消息再发了延迟1秒的消息，他们在一个链表中所以延迟1秒的消息会需要等待延迟9秒的消息先投递。显然这是不能接受的，那么如何解决这个问题？</p>
+<ul>
+<li><strong>排序</strong></li>
+</ul>
+<p>显然，如果对TimeWheel一个tick中的任务进行排序显然就解决了上面的问题</p>
+<p>TPS较大时带来严重性能消耗，无法接受</p>
+<ul>
+<li><strong>扩大时间轮</strong></li>
+</ul>
+<p>能不能通过扩大时间轮的方式避免延迟9和延迟1落到一个tick位置上？</p>
+<p>假设支持30天，精度为1秒，那么ticksPerWheel=30 * 24 * 60 * 60，这样每一个tick上的延迟都是一致的，不存在上述的问题（类似于将RocketMQ的Level提升到了30 * 24 * 60 * 60个）</p>
+<p>但是TimeWheel需要被加载到内存操作，这显然是无法接受的。</p>
+<ul>
+<li><strong>延迟加载</strong></li>
+</ul>
+<p>只加载最近30分钟延迟消息<br>
+<img src="https://img-blog.csdnimg.cn/20190828104348901.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h2><a id="_330"></a>顺序消息</h2>
+<h3><a id="_332"></a>全局顺序</h3>
+<p>对于指定的一个 Topic，所有消息按照严格的先入先出（FIFO）的顺序来发布和消费<br>
+<img src="https://img-blog.csdnimg.cn/20190825162147350.png" alt="在这里插入图片描述"><br>
+缺点：性能较差，等于单线程处理</p>
+<h3><a id="_337"></a>分区顺序</h3>
+<p>对于指定的一个 Topic，所有消息根据 Sharding Key 进行区块分区。同一个分区内的消息按照严格的 FIFO 顺序进行发布和消费。Sharding Key 是顺序消息中用来区分不同分区的关键字段，和普通消息的 Key 是完全不同的概念<br>
+<img src="https://img-blog.csdnimg.cn/20190825162231859.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>如电商系统中的订单创建，以订单 ID 作为 Sharding Key，那么同一个订单相关的创建订单消息、订单支付消息、订单退款消息、订单物流消息都会按照发布的先后顺序来消费</p>
+<h3><a id="API_343"></a>关键API</h3>
+<p>Producer端</p>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">MessageQueueSelector</span> <span class="token punctuation">{</span>
+	<span class="token comment">//根据arg选择一个消息队列</span>
+    MessageQueue <span class="token function">select</span><span class="token punctuation">(</span>final List<span class="token operator">&lt;</span>MessageQueue<span class="token operator">&gt;</span> mqs<span class="token punctuation">,</span> final Message msg<span class="token punctuation">,</span> final Object arg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Consumer端</p>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">MessageListenerOrderly</span> <span class="token keyword">extends</span> <span class="token class-name">MessageListener</span> <span class="token punctuation">{</span>
+    <span class="token comment">/**
+     * 顺序消息消息方法
+     */</span>
+    ConsumeOrderlyStatus <span class="token function">consumeMessage</span><span class="token punctuation">(</span>final List<span class="token operator">&lt;</span>MessageExt<span class="token operator">&gt;</span> msgs<span class="token punctuation">,</span>
+        final ConsumeOrderlyContext context<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3><a id="Producer_Demo_367"></a>Producer Demo</h3>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Producer</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span>  <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
+            MQProducer producer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">DefaultMQProducer</span><span class="token punctuation">(</span><span class="token string">"please_rename_unique_group_name"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">(</span><span class="token punctuation">(</span>DefaultMQProducer<span class="token punctuation">)</span> producer<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">setNamesrvAddr</span><span class="token punctuation">(</span><span class="token string">"111.231.110.149:9876"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            producer<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token comment">// orderId为1的订单发送100条消息</span>
+            <span class="token keyword">new</span> <span class="token class-name">Thread</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+                Integer orderId <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                <span class="token function">sendMessage</span><span class="token punctuation">(</span>producer<span class="token punctuation">,</span> orderId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">// orderId为2的订单发送100条消息</span>
+            <span class="token keyword">new</span> <span class="token class-name">Thread</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+                Integer orderId <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+                <span class="token function">sendMessage</span><span class="token punctuation">(</span>producer<span class="token punctuation">,</span> orderId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            Thread<span class="token punctuation">.</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">1000</span><span class="token operator">*</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            producer<span class="token punctuation">.</span><span class="token function">shutdown</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">MQClientException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">InterruptedException</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">sendMessage</span><span class="token punctuation">(</span>MQProducer producer<span class="token punctuation">,</span> Integer orderId<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>int i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">100</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                Message msg <span class="token operator">=</span>
+                        <span class="token keyword">new</span> <span class="token class-name">Message</span><span class="token punctuation">(</span><span class="token string">"TopicTestjjj"</span><span class="token punctuation">,</span> <span class="token string">"TagA"</span><span class="token punctuation">,</span> i <span class="token operator">+</span> <span class="token string">""</span><span class="token punctuation">,</span>
+                                <span class="token punctuation">(</span>orderId <span class="token operator">+</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>RemotingHelper<span class="token punctuation">.</span><span class="token constant">DEFAULT_CHARSET</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                SendResult sendResult <span class="token operator">=</span> producer<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span>msg<span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">MessageQueueSelector</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    @Override
+                    <span class="token keyword">public</span> MessageQueue <span class="token function">select</span><span class="token punctuation">(</span>List<span class="token operator">&lt;</span>MessageQueue<span class="token operator">&gt;</span> mqs<span class="token punctuation">,</span> Message msg<span class="token punctuation">,</span> Object arg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    	<span class="token comment">// 根据orderId选择消息队列</span>
+                        Integer id <span class="token operator">=</span> <span class="token punctuation">(</span>Integer<span class="token punctuation">)</span> arg<span class="token punctuation">;</span>
+                        int index <span class="token operator">=</span> id <span class="token operator">%</span> mqs<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token keyword">return</span> mqs<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span>index<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span> orderId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"message send,orderId:"</span><span class="token operator">+</span>orderId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Exception</span> e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3><a id="Consumer_Demo_422"></a>Consumer Demo</h3>
+<pre><code class="prism language-javascript"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Consumer</span> <span class="token punctuation">{</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> throws MQClientException <span class="token punctuation">{</span>
+        DefaultMQPushConsumer consumer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">DefaultMQPushConsumer</span><span class="token punctuation">(</span><span class="token string">"please_rename_unique_group_name_3"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        consumer<span class="token punctuation">.</span><span class="token function">setNamesrvAddr</span><span class="token punctuation">(</span><span class="token string">"111.231.110.149:9876"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        consumer<span class="token punctuation">.</span><span class="token function">setConsumeFromWhere</span><span class="token punctuation">(</span>ConsumeFromWhere<span class="token punctuation">.</span><span class="token constant">CONSUME_FROM_FIRST_OFFSET</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        consumer<span class="token punctuation">.</span><span class="token function">subscribe</span><span class="token punctuation">(</span><span class="token string">"TopicTestjjj"</span><span class="token punctuation">,</span> <span class="token string">"TagA"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">//模拟消费者并行消费</span>
+        consumer<span class="token punctuation">.</span><span class="token function">setConsumeThreadMin</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        consumer<span class="token punctuation">.</span><span class="token function">setConsumeThreadMin</span><span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        consumer<span class="token punctuation">.</span><span class="token function">registerMessageListener</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">MessageListenerOrderly</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            @Override
+            <span class="token keyword">public</span> ConsumeOrderlyStatus <span class="token function">consumeMessage</span><span class="token punctuation">(</span>List<span class="token operator">&lt;</span>MessageExt<span class="token operator">&gt;</span> msgs<span class="token punctuation">,</span> ConsumeOrderlyContext context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token comment">//                context.setAutoCommit(false);</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span>MessageExt msg <span class="token punctuation">:</span> msgs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"queueId:"</span><span class="token operator">+</span>msg<span class="token punctuation">.</span><span class="token function">getQueueId</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token string">",orderId:"</span><span class="token operator">+</span><span class="token keyword">new</span> <span class="token class-name">String</span><span class="token punctuation">(</span>msg<span class="token punctuation">.</span><span class="token function">getBody</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token string">",i:"</span><span class="token operator">+</span>msg<span class="token punctuation">.</span><span class="token function">getKeys</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">return</span> ConsumeOrderlyStatus<span class="token punctuation">.</span><span class="token constant">SUCCESS</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        consumer<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Consumer Started.%n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span>
+</code></pre>
+<h3><a id="_458"></a>实现思路及原理</h3>
+<p>要保证消息的顺序消费，有三个关键点</p>
+<ol>
+<li>消息顺序发送</li>
+<li>消息顺序存储</li>
+<li>消息顺序消费</li>
+</ol>
+<p>第一点，消息顺序发送，多线程发送的消息无法保证有序性，因此，需要业务方在发送时，针对同一个业务编号(如同一笔订单)的消息需要保证在一个线程内顺序发送，在上一个消息发送成功后，在进行下一个消息的发送。对应到mq中，消息发送方法就得使用同步发送，<font color="red">关键点在于单线程同步顺序发送消息</font></p>
+<p>第二点，消息顺序存储，mq的topic下会存在多个queue，要保证消息的顺序存储，同一个业务编号的消息需要被发送到一个queue中。对应到mq中，需要使用MessageQueueSelector来选择要发送的queue，即对业务编号进行hash，然后根据队列数量对hash值取余，将消息发送到一个queue中。<font color="red">关键点在于根据业务唯一编号Hash后选择同一消息队列(分区)</font></p>
+<p>第三点，消息顺序消费，要保证消息顺序消费，同一个queue就只能被一个消费者所消费，因此对broker中消费队列加锁是无法避免的。同一时刻，一个消费队列只能被一个消费者消费，消费者内部，也只能有一个消费线程来消费该队列。即，同一时刻，一个消费队列只能被一个消费者中的一个线程消费。<font color="red">关键点在于保证一个队列同一个时刻只能被一个消费者中一个线程消费</font></p>
+<p>锁定MessageQueue，向broker申请锁定队列，<code>RebalanceImpl#updateProcessQueueTableInRebalance</code></p>
+<p><img src="https://img-blog.csdnimg.cn/20190825163754968.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>锁定单线程消费，synchronized申请独占锁，ConsumeMessageOrderlyService.ConsumeRequest<br>
+<img src="https://img-blog.csdnimg.cn/20190825163932354.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hvc2Fvcw==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<p>&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;</p>
+<p><img src="https://img-blog.csdnimg.cn/20190904162904989.png#pic_center" alt="在这里插入图片描述" width="700" height="700"></p>
+</div>
+</body>
+
+</html>
