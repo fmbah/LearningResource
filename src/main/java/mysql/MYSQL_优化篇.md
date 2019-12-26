@@ -17,3 +17,6 @@ from `trial`.`zhubo_video` `zv` left join `trial`.`zhubo_user_info_detail` `zuid
  
  两表 链接条件类型/字符集不一致  导致索引失效
  
+ 
+ 
+ 
