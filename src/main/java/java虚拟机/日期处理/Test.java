@@ -6,6 +6,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.TemporalField;
 import java.util.Date;
 
@@ -175,6 +176,12 @@ public class Test {
         //对前端传入的日期进行格式化 在LocalDateTime字段上添加@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")注解即可，如下：
         //@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         //protected LocalDateTime gmtModified;
+    }
+
+
+    @org.junit.Test
+    public void dailyTest() {
+        System.out.println(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atStartOfDay().getSecond());
     }
 
 
