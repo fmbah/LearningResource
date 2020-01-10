@@ -48,7 +48,6 @@ public final class ImmuTableObject {
         mp.put("123", "123");
         ImmuTableObject immuTableObject = new ImmuTableObject(text, mp);
         System.out.println(immuTableObject.getText() + "=" + immuTableObject.getMp()+ "=>" + immuTableObject);
-        text = "234";
         mp.put("444","444");
         System.out.println(immuTableObject.getText() + "=" + immuTableObject.getMp()+ "=>" + immuTableObject);
 
