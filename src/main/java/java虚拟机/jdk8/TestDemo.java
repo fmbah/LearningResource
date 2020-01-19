@@ -2,6 +2,9 @@ package java虚拟机.jdk8;
 
 import org.junit.Test;
 
+import java.io.Serializable;
+import java.util.Optional;
+
 /**
  * @author a8079
  * @title: TestDemo
@@ -25,5 +28,27 @@ public class TestDemo {
             default:sum--;
         }
         System.out.println(sum);
+    }
+
+    private static final Integer ZERO = 0;
+    @Test
+    public void test1() {
+        TestBean testBean = new TestBean();
+        testBean.setId(ZERO);
+
+
+        System.out.println(Optional.ofNullable(testBean.getId()).orElse(ZERO) == ZERO);
+
+    }
+    public class TestBean implements Serializable {
+        private Integer id;
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
     }
 }

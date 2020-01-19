@@ -1,7 +1,7 @@
 package more.thread.test.设计模式.装饰模式;
 
 /**
- * @ClassName Test
+ * @ClassName TestZkLock
  * @Description
  *
  * https://www.ibm.com/developerworks/cn/java/j-lo-cdi-decorator-pattern/index.html

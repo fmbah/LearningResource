@@ -8,13 +8,16 @@ package more.ftf.zookeeper.balance.server;
  * @date 2020/1/1014:38
  */
 
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
  * 处理服务端与客户端之间的通信
  */
-public class ServerHandler extends ChannelHandlerAdapter {
+public class ServerHandler extends SimpleChannelInboundHandler<BalanceUpdateProvider> {
+    @Override
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, BalanceUpdateProvider balanceUpdateProvider) throws Exception {
+    }
 
     private final BalanceUpdateProvider balanceUpdater;
     private static final Integer BALANCE_STEP = 1;
@@ -28,16 +31,15 @@ public class ServerHandler extends ChannelHandlerAdapter {
     public BalanceUpdateProvider getBalanceUpdater() {
         return balanceUpdater;
     }
-
     // 建立连接时增加负载
-//    @Override
+    @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("one client connect...");
         balanceUpdater.addBalance(BALANCE_STEP);
     }
 
     // 断开连接时减少负载
-//    @Override
+    @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         balanceUpdater.reduceBalance(BALANCE_STEP);
     }

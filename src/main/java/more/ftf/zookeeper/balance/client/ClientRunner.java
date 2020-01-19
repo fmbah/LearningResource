@@ -16,8 +16,8 @@ import java.util.List;
  */
 public class ClientRunner {
 
-    private static final int  CLIENT_QTY = 3;
-    private static final String  ZOOKEEPER_SERVER = "192.168.1.105:2181";
+    private static final int  CLIENT_QTY = 20;
+    private static final String  ZOOKEEPER_SERVER = "192.168.56.104:2181";
     private static final String  SERVERS_PATH = "/servers";
 
     public static void main(String[] args) {

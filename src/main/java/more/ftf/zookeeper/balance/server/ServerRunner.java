@@ -17,7 +17,7 @@ import java.util.List;
 public class ServerRunner {
 
     private static final int  SERVER_QTY = 2;
-    private static final String  ZOOKEEPER_SERVER = "192.168.1.105:2181";
+    private static final String  ZOOKEEPER_SERVER = "192.168.56.104:2181";
     private static final String  SERVERS_PATH = "/servers";
 
     public static void main(String[] args) {
