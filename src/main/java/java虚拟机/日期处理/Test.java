@@ -178,7 +178,6 @@ public class Test {
         //protected LocalDateTime gmtModified;
     }
 
-
     @org.junit.Test
     public void dailyTest() {
         System.out.println(LocalDate.now().with(TemporalAdjusters.lastDayOfMonth()).atStartOfDay().getSecond());
