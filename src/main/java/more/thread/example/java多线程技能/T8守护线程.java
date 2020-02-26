@@ -11,7 +11,7 @@ package more.thread.example.java多线程技能;
 public class T8守护线程 {
     public static void main (String args[]) {
         MyThread8 myThread8 = new MyThread8();
-        myThread8.setDaemon(true);//将此线程设置为守护线程
+        myThread8.setDaemon(false);//将此线程设置为守护线程
         myThread8.start();
         try {
             Thread.sleep(2000);

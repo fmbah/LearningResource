@@ -3,6 +3,7 @@ package more.ftf.zookeeper.nameservice;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.I0Itec.zkclient.serialize.BytesPushThroughSerializer;
+import org.apache.zookeeper.data.Stat;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,6 +67,9 @@ public class IdMaker {
     private void init(){
 
         client = new ZkClient(server,5000,5000,new BytesPushThroughSerializer());
+
+//        client.readData("", new Stat());
+
         cleanExector = Executors.newFixedThreadPool(10);
         try{
             client.createPersistent(root,true);
@@ -121,6 +125,9 @@ public class IdMaker {
         final String fullNodePath = root.concat("/").concat(nodeName);
         // 创建持久化顺序节点
         final String ourPath = client.createPersistentSequential(fullNodePath, null);
+
+
+        System.out.println(ourPath);
 
         // 避免zookeeper的顺序节点暴增，直接删除掉刚创建的顺序节点
         if (removeMethod.equals(RemoveMethod.IMMEDIATELY)){ // 立即删除

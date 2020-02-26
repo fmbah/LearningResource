@@ -13,15 +13,21 @@ import org.I0Itec.zkclient.ZkClient;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 阻塞分布式队列
- * 扩展自简单分布式队列，在拿不到队列数据时，进行阻塞直到拿到数据
+ *      扩展自简单分布式队列，在拿不到队列数据时，进行阻塞直到拿到数据
+ *      利用countDownLatch 异步转同步
+ *
+ *
+ *
  */
 public class DistributedBlockingQueue<T> extends DistributedSimpleQueue<T>{
 
 
     public DistributedBlockingQueue(ZkClient zkClient, String root) {
+
         super(zkClient, root);
 
     }

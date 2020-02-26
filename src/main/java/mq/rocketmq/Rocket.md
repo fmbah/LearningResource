@@ -84,3 +84,164 @@ SendResult sendResult = producer.send(msg, new MessageQueueSelector(){
 
 ##### 集群方式
 1. 双主双从，同步复制，异步刷盘
+2. mkdir -p /host/cluster/rocketmq/logs/nameserver-a
+   mkdir -p /host/cluster/rocketmq/logs/nameserver-b
+   mkdir -p /host/cluster/rocketmq/store/nameserver-a
+   mkdir -p /host/cluster/rocketmq/store/nameserver-b
+   mkdir -p /host/cluster/rocketmq/logs/broker-a
+   mkdir -p /host/cluster/rocketmq/logs/broker-b
+   mkdir -p /host/cluster/rocketmq/store/broker-a
+   mkdir -p /host/cluster/rocketmq/store/broker-b
+   mkdir -p /host/cluster/rocketmq/broker-a/
+   mkdir -p /host/cluster/rocketmq/broker-b/
+3. 创建broker.conf
+   broker.conf是Broker的配置文件，因为此时RocketMQ镜像还没有拉取,所以还没有默认的broker.conf。所以这里直接写好，到时候通过命令替换默认的broker.conf。
+   因为是双主模式部署，所以会有两个broker.conf,这里暂且命名 broker-a.conf 和 broker-b.conf
+   1、当前Broker对外暴露的端口号
+   2、注册到NameServer的地址，看到这里有两个地址，说明NameServer也是集群部署。
+   3、当前Broker的角色，是主还是从，这里表示是主。
+        1. broker-a.conf
+        ````
+        brokerClusterName = rocketmq-cluster
+        brokerName = broker-a
+        brokerId = 0
+        #这个很有讲究 如果是正式环境 这里一定要填写内网地址（安全）
+        #如果是用于测试或者本地这里建议要填外网地址，因为你的本地代码是无法连接到阿里云内网，只能连接外网。
+        brokerIP1 = 172.16.0.4
+        deleteWhen = 04
+        fileReservedTime = 48
+        brokerRole = ASYNC_MASTER
+        flushDiskType = ASYNC_FLUSH
+        # 内网的(阿里云有内网IP和外网IP)
+        namesrvAddr=172.16.0.4:9876;172.16.0.4:9877
+        autoCreateTopicEnable=true
+        #Broker 对外服务的监听端口,
+        listenPort = 10911
+        #Broker角色
+        #- ASYNC_MASTER 异步复制Master
+        #- SYNC_MASTER 同步双写Master
+        #- SLAVE
+        brokerRole=ASYNC_MASTER
+        #刷盘方式
+        #- ASYNC_FLUSH 异步刷盘
+        #- SYNC_FLUSH 同步刷盘
+        flushDiskType=ASYNC_FLUSH
+        ````
+        2. broker-b.conf
+        ````
+        brokerClusterName = rocketmq-cluster
+        brokerName = broker-b
+        brokerId = 0
+        brokerIP1 = 172.16.0.4
+        deleteWhen = 04
+        fileReservedTime = 48
+        brokerRole = ASYNC_MASTER
+        flushDiskType = ASYNC_FLUSH
+        # 内网的(阿里云有内网IP和外网IP)
+        namesrvAddr=172.16.0.4:9876;172.16.0.4:9877
+        autoCreateTopicEnable=true
+        #Broker 对外服务的监听端口,
+        listenPort = 10909
+        #Broker角色
+        #- ASYNC_MASTER 异步复制Master
+        #- SYNC_MASTER 同步双写Master
+        #- SLAVE
+        brokerRole=ASYNC_MASTER
+        #刷盘方式
+        #- ASYNC_FLUSH 异步刷盘
+        #- SYNC_FLUSH 同步刷盘
+        flushDiskType=ASYNC_FLUSH
+        ````
+3. 编写 docker-compose.yml
+        ````
+        version: '3.5'
+            services:
+              rmqnamesrv-a:
+                image: rocketmqinc/rocketmq:4.4.0
+                container_name: rmqnamesrv-a
+                ports:
+                  - 9876:9876
+                volumes:
+                  - /host/cluster/rocketmq/logs/nameserver-a:/opt/logs
+                  - /host/cluster/rocketmq/store/nameserver-a:/opt/store
+                command: sh mqnamesrv
+                networks:
+                    rmq:
+                      aliases:
+                        - rmqnamesrv-a
+            
+              rmqnamesrv-b:
+                image: rocketmqinc/rocketmq:4.4.0
+                container_name: rmqnamesrv-b
+                ports:
+                  - 9877:9877
+                volumes:
+                  - /host/cluster/rocketmq/logs/nameserver-b:/opt/logs
+                  - /host/cluster/rocketmq/store/nameserver-b:/opt/store
+                command: sh mqnamesrv
+                networks:
+                    rmq:
+                      aliases:
+                        - rmqnamesrv-b
+            
+              rmqbroker-a:
+                image: rocketmqinc/rocketmq:4.4.0
+                container_name: rmqbroker-a
+                ports:
+                  - 10911:10911
+                volumes:
+                  - /host/cluster/rocketmq/logs/broker-a:/opt/logs
+                  - /host/cluster/rocketmq/store/broker-a:/opt/store
+                  - /host/cluster/rocketmq/broker-a/broker-a.conf:/opt/rocketmq-4.4.0/conf/broker.conf 
+                environment:
+                    TZ: Asia/Shanghai
+                    NAMESRV_ADDR: "rmqnamesrv-a:9876"
+                    JAVA_OPTS: " -Duser.home=/opt"
+                    JAVA_OPT_EXT: "-server -Xms256m -Xmx256m -Xmn256m"
+                command: sh mqbroker -c /opt/rocketmq-4.4.0/conf/broker.conf autoCreateTopicEnable=true &
+                links:
+                  - rmqnamesrv-a:rmqnamesrv-a
+                  - rmqnamesrv-b:rmqnamesrv-b
+                networks:
+                  rmq:
+                    aliases:
+                      - rmqbroker-a
+            
+              rmqbroker-b:
+                image: rocketmqinc/rocketmq:4.4.0
+                container_name: rmqbroker-b
+                ports:
+                  - 10909:10909
+                volumes:
+                  - /host/cluster/rocketmq/logs/broker-b:/opt/logs
+                  - /host/cluster/rocketmq/store/broker-b:/opt/store
+                  - /host/cluster/rocketmq/broker-b/broker-b.conf:/opt/rocketmq-4.4.0/conf/broker.conf 
+                environment:
+                    TZ: Asia/Shanghai
+                    NAMESRV_ADDR: "rmqnamesrv-b:9876"
+                    JAVA_OPTS: " -Duser.home=/opt"
+                    JAVA_OPT_EXT: "-server -Xms256m -Xmx256m -Xmn256m"
+                command: sh mqbroker -c /opt/rocketmq-4.4.0/conf/broker.conf autoCreateTopicEnable=true &
+                links:
+                  - rmqnamesrv-a:rmqnamesrv-a
+                  - rmqnamesrv-b:rmqnamesrv-b
+                networks:
+                  rmq:
+                    aliases:
+                      - rmqbroker-b
+              rmqconsole:
+                image: styletang/rocketmq-console-ng
+                container_name: rmqconsole
+                ports:
+                  - 9001:9001
+                environment:
+                    JAVA_OPTS: -Drocketmq.namesrv.addr=rmqnamesrv-a:9876;rmqnamesrv-b:9877 -Dcom.rocketmq.sendMessageWithVIPChannel=false
+                networks:
+                  rmq:
+                    aliases:
+                      - rmqconsole
+            networks:
+              test-net:
+                name: test-net
+                driver: bridge
+        ````

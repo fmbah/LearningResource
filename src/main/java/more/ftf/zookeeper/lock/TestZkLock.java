@@ -1,6 +1,7 @@
 package more.ftf.zookeeper.lock;
 
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.exception.ZkException;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -19,15 +20,20 @@ public class TestZkLock {
 
     @Test
     public void test0 () {
-        ZkClient client = new ZkClient("192.168.56.104:2181");
+        ZkClient client = new ZkClient("192.168.56.105:2181");
+        try {
+            client.createPersistent("/sort/a");
+        } catch (ZkException e) {
 
-        String ephemeralSequentia1l1 = client.createEphemeralSequential("/sort/1", null);
+        }
+
+        String ephemeralSequentia1l1 = client.createEphemeralSequential("/sort/a/", null);
         System.out.println(ephemeralSequentia1l1);
 
-        String ephemeralSequential2 = client.createEphemeralSequential("/sort/1", null);
+        String ephemeralSequential2 = client.createEphemeralSequential("/sort/a/", null);
         System.out.println(ephemeralSequential2);
 
-        List<String> children = client.getChildren("/sort");
+        List<String> children = client.getChildren("/sort/a");
         children.forEach(a-> {
             System.out.println(a);
         });

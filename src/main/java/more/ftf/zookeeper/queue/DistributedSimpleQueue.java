@@ -4,7 +4,12 @@ package more.ftf.zookeeper.queue;
  * @author a8079
  * @title: DistributedSimpleQueue
  * @projectName nio
- * @description: TODO
+ * @description:
+ *
+ *                  简单队列，
+ *                  入队操作：创建永久顺序节点
+ *                  出队操作：排序获取队列种最小的节点
+ *
  * @date 2020/1/1717:03
  */
 

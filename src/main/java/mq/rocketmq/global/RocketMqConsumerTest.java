@@ -22,16 +22,17 @@ public class RocketMqConsumerTest {
     public static void main(String[] args) throws MQClientException {
 
         // Instantiate with specified consumer group name.
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("Consumer_Demo_Group");
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("reliable_push_consumer");
 
         // Specify name server addresses.
-        consumer.setNamesrvAddr("106.13.81.173:9876");
+//        consumer.setNamesrvAddr("106.13.81.173:9876");
+        consumer.setNamesrvAddr("192.168.56.105:9876");
 
         // Subscribe one more more topics to consume.
         try {
             consumer.subscribe(
                     // 订阅相应消息类型
-                    "Topic_Demo"
+                    "reliable_topic"
                     // 过滤消息通配符；例如TageA || TagB皆可
                     , "*"
                     );
