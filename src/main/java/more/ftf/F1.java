@@ -66,6 +66,12 @@ public class F1 {
         //项目中的内存溢出,内存泄漏例子,ThreadLocal的键是弱引用,内存回收可能会将其清除,没有了键,就无法找到value了,造成了内存泄漏
         //动态规划题目(大体是N*M的矩阵方格中,找一个最大的正方形是几乘几的)
 
+
+        try {
+            "".wait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 

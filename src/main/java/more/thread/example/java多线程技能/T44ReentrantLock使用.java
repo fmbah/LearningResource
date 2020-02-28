@@ -1,5 +1,6 @@
 package more.thread.example.java多线程技能;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -36,6 +37,8 @@ public class T44ReentrantLock使用 {
  */
 class MyReentrantLock44Service {
     private Lock lock = new ReentrantLock();//持有了Lock lock = new ReentrantLock()对象锁,相当于是synchronized对象锁
+
+    private Condition condition = lock.newCondition();
 
     public void testMethod () {
         lock.lock();//获取锁
