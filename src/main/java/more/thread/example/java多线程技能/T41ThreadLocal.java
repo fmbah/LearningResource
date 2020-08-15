@@ -1,5 +1,7 @@
 package more.thread.example.java多线程技能;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @ClassName T41ThreadLocal
  * @Description public static 修饰符 是使所有线程都共享同一个变量
@@ -33,14 +35,41 @@ public class T41ThreadLocal {
 //    }
 
     public static void main(String args[]) {
-        MyThread41A myThread41A = new MyThread41A();
-        myThread41A.start();
-        for (int i = 0; i < 100; i++) {
-            Tools41.threadLocal.set("main_" + i);
-            System.out.println("get main_" + i + ": " + Tools41.threadLocal.get());
-        }
-        MyThread41B myThread41B = new MyThread41B();
-        myThread41B.start();
+//        MyThread41A myThread41A = new MyThread41A();
+//        myThread41A.start();
+//        int i = 0;
+//        for (; i < 100; i++) {
+//            Tools41.threadLocal.set("main_" + i);
+//            System.out.println("get main_" + i + ": " + Tools41.threadLocal.get());
+//        }
+//        MyThread41B myThread41B = new MyThread41B();
+//        myThread41B.start();
+//        try {
+//            TimeUnit.SECONDS.sleep(1);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println("get main_" + i + ": " + Tools41.threadLocal.get());
+//        System.out.println(Tools41.threadLocalExt.get());
+//        Tools41.threadLocalExt.set("1");
+//        Tools41.threadLocalExt.set("2");
+        new Thread(()->{
+            Tools41.threadLocalExt.set("3");
+            System.out.println(Tools41.threadLocalExt.get());
+        }).start();
+
+
+
+        /**
+         * A thread -> threadLocalMap
+         * a1 threadLocal - > 自定义value值
+         * a2 threadLocal -> 自定义value值
+         * threadLocalMap -> 数组 entry 继承自 WeakReference，[<?> WeakReference, value]
+         *
+         *
+         *
+         *
+         */
     }
 }
 
